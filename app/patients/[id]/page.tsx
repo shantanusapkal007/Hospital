@@ -641,7 +641,7 @@ export default function PatientDetailPage() {
                     <Pill className="h-4 w-4 text-emerald-600" /> Current Medicines
                   </h4>
                   <div className="rounded-2xl border border-emerald-100 bg-gradient-to-br from-emerald-50/70 to-white p-4 shadow-sm">
-                    <PatientMedicines medicines={normalizedSavedMedicines} readOnly />
+                    <PatientMedicines medicines={normalizedSavedMedicines} readOnly onMedicinesChange={() => {}} />
                   </div>
                 </div>
               )}

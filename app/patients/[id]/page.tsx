@@ -64,14 +64,14 @@ export default function PatientDetailPage() {
   const buildMedicineDraft = () => [] as Medicine[]
 
   const buildClinicalDetailsFormData = (nextPatient: Patient | null) => ({
-    present_complaints: nextPatient?.present_complaints || "",
-    weight: nextPatient?.weight != null ? String(nextPatient.weight) : "",
-    height_cm: nextPatient?.height_cm != null ? String(nextPatient.height_cm) : "",
-    bp: nextPatient?.bp || "",
-    temperature: nextPatient?.temperature != null ? String(nextPatient.temperature) : "",
-    spo2: nextPatient?.spo2 != null ? String(nextPatient.spo2) : "",
-    repetition: nextPatient?.repetition || "",
-    lmp: nextPatient?.lmp || "",
+    present_complaints: "",
+    weight: "",
+    height_cm: "",
+    bp: "",
+    temperature: "",
+    spo2: "",
+    repetition: "",
+    lmp: "",
   })
 
   const parseOptionalNumber = (value: string) => {

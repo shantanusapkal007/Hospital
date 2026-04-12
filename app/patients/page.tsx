@@ -227,7 +227,7 @@ export default function PatientsPage() {
             <div className="space-y-1"><label className={labelClass}>DOB</label><input name="dob" type="date" className={inputClass} {...FORM_FIELD_PROPS} /></div>
           </div>
 
-          {selectedGender === "Female" && (
+          {selectedGender?.toLowerCase() === "female" && (
             <div className="p-3 bg-pink-50 border border-pink-100 rounded-lg space-y-3">
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1">

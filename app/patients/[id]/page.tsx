@@ -64,14 +64,14 @@ export default function PatientDetailPage() {
   const buildMedicineDraft = () => [] as Medicine[]
 
   const buildClinicalDetailsFormData = (nextPatient: Patient | null) => ({
-    present_complaints: "",
-    weight: "",
-    height_cm: "",
-    bp: "",
-    temperature: "",
-    spo2: "",
-    repetition: "",
-    lmp: "",
+    present_complaints: nextPatient?.present_complaints || "",
+    weight: nextPatient?.weight != null ? String(nextPatient.weight) : "",
+    height_cm: nextPatient?.height_cm != null ? String(nextPatient.height_cm) : "",
+    bp: nextPatient?.bp || "",
+    temperature: nextPatient?.temperature != null ? String(nextPatient.temperature) : "",
+    spo2: nextPatient?.spo2 != null ? String(nextPatient.spo2) : "",
+    repetition: nextPatient?.repetition || "",
+    lmp: nextPatient?.lmp || "",
   })
 
   const parseOptionalNumber = (value: string) => {
@@ -174,7 +174,7 @@ export default function PatientDetailPage() {
         current_medicines: editMedicines,
       };
 
-      if (editGender === "Female") {
+      if (editGender?.toLowerCase() === "female") {
         updateData.lmp = fd.get("lmp") as string || "";
         updateData.menstrual_cycle_days = parseInt(fd.get("menstrual_cycle_days") as string) || null;
       } else {
@@ -212,7 +212,7 @@ export default function PatientDetailPage() {
         spo2: parseOptionalNumber(clinicalDetailsFormData.spo2),
         repetition: clinicalDetailsFormData.repetition.trim(),
       }
-      if (patient.gender === 'Female') {
+      if (patient.gender?.toLowerCase() === 'female') {
         updateData.lmp = clinicalDetailsFormData.lmp;
       }
       
@@ -268,7 +268,7 @@ export default function PatientDetailPage() {
     { label: "SpO2", value: patient.spo2 != null ? `${patient.spo2}%` : "-" },
     { label: "Repetition", value: patient.repetition || "-" },
   ];
-  if (patient.gender === 'Female') {
+  if (patient.gender?.toLowerCase() === 'female') {
     clinicalSummaryItems.push({ label: "LMP", value: patient.lmp || "-" });
   }
   const previousComplaint = visits.length > 0 ? visits[0].complaints : "";
@@ -316,7 +316,7 @@ export default function PatientDetailPage() {
             <div className="space-y-1"><label className="text-sm font-medium text-slate-700">Blood</label><input name="blood_group" defaultValue={patient.blood_group} className={ic} {...FORM_FIELD_PROPS} /></div>
             <div className="space-y-1"><label className="text-sm font-medium text-slate-700">DOB</label><input name="dob" type="date" defaultValue={patient.date_of_birth} className={ic} {...FORM_FIELD_PROPS} /></div>
           </div>
-          {editGender === "Female" && (
+          {editGender?.toLowerCase() === "female" && (
             <div className="p-3 bg-pink-50 border border-pink-100 rounded-lg space-y-3">
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1">
@@ -600,7 +600,7 @@ export default function PatientDetailPage() {
                 />
               </div>
 
-              {patient.gender === "Female" && (
+              {patient.gender?.toLowerCase() === "female" && (
                 <div className="space-y-1">
                   <label className="text-sm font-medium text-slate-700">LMP</label>
                   <input

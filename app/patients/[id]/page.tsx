@@ -919,10 +919,10 @@ export default function PatientDetailPage() {
                     const entries: { date: string; sortKey: number; desc: string; debit: number; credit: number }[] = []
                     visits.forEach(v => {
                       if (v.total_bill && v.total_bill > 0) {
-                        const visitDate = v.created_at?.toDate?.()
+                        const visitDate = v.created_at ? new Date(v.created_at) : new Date();
                         entries.push({
-                          date: visitDate?.toLocaleDateString() || "-",
-                          sortKey: visitDate?.getTime() || 0,
+                          date: visitDate.toLocaleDateString() || "-",
+                          sortKey: visitDate.getTime() || 0,
                           desc: `Visit: ${v.diagnosis || "Consultation"}`,
                           debit: v.total_bill,
                           credit: 0,
@@ -930,10 +930,10 @@ export default function PatientDetailPage() {
                       }
                     })
                     payments.forEach(p => {
-                      const paymentDate = p.date ? new Date(`${p.date}T00:00:00`) : p.created_at?.toDate?.()
+                      const paymentDate = p.date ? new Date(`${p.date}T00:00:00`) : (p.created_at ? new Date(p.created_at) : new Date());
                       entries.push({
-                        date: p.date || paymentDate?.toLocaleDateString() || "-",
-                        sortKey: paymentDate?.getTime() || 0,
+                        date: p.date || paymentDate.toLocaleDateString() || "-",
+                        sortKey: paymentDate.getTime() || 0,
                         desc: `Payment: ${p.payment_method?.toUpperCase() || ""}${p.description ? ` - ${p.description}` : ""}`,
                         debit: 0,
                         credit: p.amount,

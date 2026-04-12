@@ -1,46 +1,27 @@
-import { supabase } from "@/lib/supabase";
+import { doc, getDoc, setDoc, Timestamp } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 import type { AppUser, UserRole } from "@/lib/types";
 
-export async function getOrCreateUser(
-  uid: string,
-  name: string,
-  email: string,
-  photoURL?: string
-): Promise<AppUser> {
-  // Try to fetch existing user
-  const { data: existing } = await supabase
-    .from("users")
-    .select("*")
-    .eq("id", uid)
-    .single();
-
-  if (existing) return existing as AppUser;
-
-  // First-time sign-in → create user record
-  const newUser = {
-    id: uid,
+export async function getOrCreateUser(uid: string, name: string, email: string, photoURL?: string): Promise<AppUser> {
+  const ref = doc(db, "users", uid);
+  const snap = await getDoc(ref);
+  if (snap.exists()) {
+    return snap.data() as AppUser;
+  }
+  // First-time sign-in → create user document with default role
+  const newUser: AppUser = {
+    userId: uid,
     name,
     email,
-    role: "admin" as UserRole,
-    photo_url: photoURL || "",
-    is_active: true,
+    role: "admin", // single user system, everyone is admin
+    photoURL: photoURL || "",
+    createdAt: Timestamp.now(),
   };
-
-  const { data: created, error } = await supabase
-    .from("users")
-    .insert(newUser)
-    .select("*")
-    .single();
-
-  if (error) throw new Error(error.message);
-  return created as AppUser;
+  await setDoc(ref, newUser);
+  return newUser;
 }
 
 export async function updateUserRole(uid: string, role: UserRole) {
-  const { error } = await supabase
-    .from("users")
-    .update({ role, updated_at: new Date().toISOString() })
-    .eq("id", uid);
-
-  if (error) throw new Error(error.message);
+  const ref = doc(db, "users", uid);
+  await setDoc(ref, { role }, { merge: true });
 }

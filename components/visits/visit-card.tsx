@@ -19,7 +19,7 @@ export function VisitCard({ visit, onEdit }: VisitCardProps) {
             {visit.diagnosis || "Consultation"}
           </h3>
           <p className="text-sm text-slate-500 mt-1">
-            {visit.created_at ? new Date(visit.created_at).toLocaleDateString() : "-"}
+            {visit.createdAt?.toDate ? visit.createdAt.toDate().toLocaleDateString() : "-"}
           </p>
         </div>
         {onEdit && (
@@ -41,10 +41,10 @@ export function VisitCard({ visit, onEdit }: VisitCardProps) {
           </div>
         )}
 
-        {visit.examination_findings && (
+        {visit.examinationFindings && (
           <div>
             <p className="text-xs font-semibold text-slate-400 uppercase">Examination</p>
-            <p className="text-sm text-slate-700 mt-1">{visit.examination_findings}</p>
+            <p className="text-sm text-slate-700 mt-1">{visit.examinationFindings}</p>
           </div>
         )}
 
@@ -76,10 +76,10 @@ export function VisitCard({ visit, onEdit }: VisitCardProps) {
           </div>
         )}
 
-        {visit.lab_tests && (
+        {visit.labTests && (
           <div>
             <p className="text-xs font-semibold text-slate-400 uppercase">Lab Tests</p>
-            <p className="text-sm text-slate-700 mt-1">{visit.lab_tests}</p>
+            <p className="text-sm text-slate-700 mt-1">{visit.labTests}</p>
           </div>
         )}
 
@@ -90,10 +90,10 @@ export function VisitCard({ visit, onEdit }: VisitCardProps) {
           </div>
         )}
 
-        {visit.total_bill && (
+        {visit.totalBill && (
           <div className="pt-3 border-t border-slate-100">
             <p className="text-sm font-semibold text-slate-900">
-              Total Bill: {formatCurrency(visit.total_bill)}
+              Total Bill: {formatCurrency(visit.totalBill)}
             </p>
           </div>
         )}

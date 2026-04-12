@@ -1,4 +1,4 @@
-import { supabase } from "@/lib/supabase";
+// Uses Google Drive API via /api/upload route for image storage
 import imageCompression from "browser-image-compression";
 
 const MB = 1024 * 1024;
@@ -15,6 +15,7 @@ function createUniqueId() {
   if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
     return crypto.randomUUID();
   }
+
   return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 }
 
@@ -34,9 +35,7 @@ async function optimizeImageForUpload(file: File, folder: string) {
 
   try {
     const compressedBlob = await imageCompression(file, options);
-    const newName = `${createUniqueId()}-${sanitizeFileName(
-      file.name.replace(/\.[^./\\]+$/, "") + ".webp"
-    )}`;
+    const newName = `${createUniqueId()}-${sanitizeFileName(file.name.replace(/\.[^./\\]+$/, "") + ".webp")}`;
     return new File([compressedBlob], newName, {
       type: "image/webp",
       lastModified: file.lastModified,
@@ -52,45 +51,38 @@ export function validateImageFiles(files: File[], maxSizeMb: number) {
     if (!file.type.startsWith("image/")) {
       throw new Error("Only image files are allowed.");
     }
+
     if (file.size > maxSizeMb * MB) {
       throw new Error(`Each image must be ${maxSizeMb}MB or smaller.`);
     }
   }
 }
 
-export async function uploadFileToStorage(
-  file: File,
-  folder: string,
-  onProgress?: UploadProgressCallback
-) {
+export async function uploadFileToStorage(file: File, folder: string, onProgress?: UploadProgressCallback) {
   const optimizedFile = await optimizeImageForUpload(file, folder);
+  const formData = new FormData();
+  formData.append("file", optimizedFile);
+
+  // Fake upload progress initialization since fetch doesn't natively support it easily
   onProgress?.(10);
 
-  const filePath = `${folder}/${createUniqueId()}-${sanitizeFileName(optimizedFile.name)}`;
-
-  const { error } = await supabase.storage
-    .from("clinic-assets")
-    .upload(filePath, optimizedFile, {
-      cacheControl: "3600",
-      upsert: false,
-    });
+  const res = await fetch("/api/upload", {
+    method: "POST",
+    body: formData,
+  });
 
   onProgress?.(100);
 
-  if (error) throw new Error(error.message || "Failed to upload file");
+  if (!res.ok) {
+    const errorData = await res.json();
+    throw new Error(errorData.error || "Failed to upload to Google Drive");
+  }
 
-  const { data: urlData } = supabase.storage
-    .from("clinic-assets")
-    .getPublicUrl(filePath);
-
-  return urlData.publicUrl;
+  const data = await res.json();
+  return data.url;
 }
 
-export async function uploadFilesToStorage(
-  files: File[],
-  folder: string,
-  onProgress?: UploadProgressCallback
-) {
+export async function uploadFilesToStorage(files: File[], folder: string, onProgress?: UploadProgressCallback) {
   if (files.length === 0) {
     onProgress?.(100);
     return [];

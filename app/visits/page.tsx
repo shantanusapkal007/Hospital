@@ -95,8 +95,8 @@ export default function VisitsPage() {
           <h3>Dr. Consultant Physician • MBBS, MD</h3>
         </div>
         <div class="pat-info">
-          <div><strong>Patient:</strong> ${visit.patient_name}</div>
-          <div><strong>Date:</strong> ${visit.created_at ? new Date(visit.created_at).toLocaleDateString() : new Date().toLocaleDateString()}</div>
+          <div><strong>Patient:</strong> ${visit.patientName}</div>
+          <div><strong>Date:</strong> ${visit.createdAt?.toDate ? visit.createdAt.toDate().toLocaleDateString() : new Date().toLocaleDateString()}</div>
         </div>
         <div class="rx-title">Rx</div>
         <table>
@@ -107,7 +107,7 @@ export default function VisitsPage() {
         </table>
         
         ${visit.advice ? `<div class="section"><strong>Advice & Instructions:</strong> <p>${visit.advice}</p></div>` : ''}
-        ${visit.follow_up_date ? `<div><strong>Follow Up:</strong> ${new Date(visit.follow_up_date).toLocaleDateString()}</div>` : ''}
+        ${visit.followUpDate ? `<div><strong>Follow Up:</strong> ${new Date(visit.followUpDate).toLocaleDateString()}</div>` : ''}
 
         <div class="footer"><div class="sig">Doctor Signature</div></div>
       </body></html>
@@ -356,22 +356,22 @@ export default function VisitsPage() {
       }
 
       const newVisitId = await addVisit({
-        patient_id: selectedPatient.id!,
-        patient_name: selectedPatient.full_name,
-        visit_images: visitImages,
+        patientId: selectedPatient.id!,
+        patientName: selectedPatient.fullName,
+        visitImages: visitImages,
         complaints: fd.get("complaints") as string || "",
-        history_of_present_illness: fd.get("hpi") as string || "",
-        past_history: fd.get("pastHistory") as string || "",
-        family_history: fd.get("familyHistory") as string || "",
-        examination_findings: fd.get("examination") as string || "",
+        historyOfPresentIllness: fd.get("hpi") as string || "",
+        pastHistory: fd.get("pastHistory") as string || "",
+        familyHistory: fd.get("familyHistory") as string || "",
+        examinationFindings: fd.get("examination") as string || "",
         diagnosis: fd.get("diagnosis") as string || "",
-        total_bill: parseInt(fd.get("totalBill") as string) || 0,
-        lab_tests: fd.get("labTests") as string || "",
-        investigations_advised: fd.get("investigations") as string || "",
+        totalBill: parseInt(fd.get("totalBill") as string) || 0,
+        labTests: fd.get("labTests") as string || "",
+        investigationsAdvised: fd.get("investigations") as string || "",
         advice: fd.get("advice") as string || "",
         referral: fd.get("referral") as string || "",
-        follow_up_date: fd.get("followUpDate") as string || "",
-        payment_status: (fd.get("paymentStatus") as "paid" | "unpaid") || "unpaid",
+        followUpDate: fd.get("followUpDate") as string || "",
+        paymentStatus: (fd.get("paymentStatus") as "paid" | "unpaid") || "unpaid",
         prescriptions: prescriptionsToSave,
         vitals: cleanedVitals,
       })
@@ -427,7 +427,7 @@ export default function VisitsPage() {
                 setIsSaving(true);
                 try {
                   const newPatient = {
-                    full_name: name, mobile_number: mobile, case_number: nextCaseNumber || "CS-1001", treatment_type: "Allopathic" as const, gender: "Other" as const, age: 0
+                    fullName: name, mobileNumber: mobile, caseNumber: nextCaseNumber || "CS-1001", treatmentType: "Allopathic" as const, gender: "Other" as const, age: 0
                   };
                   const newId = await addPatient(newPatient);
                   const createdPatient = await getPatient(newId);
@@ -449,7 +449,7 @@ export default function VisitsPage() {
               </div>
               <input
                 type="text"
-                value={selectedPatient ? selectedPatient.full_name : patientSearch}
+                value={selectedPatient ? selectedPatient.fullName : patientSearch}
                 onChange={(e) => { setPatientSearch(e.target.value); setSelectedPatient(null) }}
                 className={ic}
                 placeholder="Search patient..."
@@ -464,7 +464,7 @@ export default function VisitsPage() {
                       onClick={() => { setSelectedPatient(patient); setPatientSearch(""); setPatientResults([]) }}
                       className="w-full text-left px-3 py-2 text-sm hover:bg-slate-50"
                     >
-                      {patient.full_name} - {patient.mobile_number}
+                      {patient.fullName} - {patient.mobileNumber}
                     </button>
                   ))}
                 </div>
@@ -638,11 +638,11 @@ export default function VisitsPage() {
             <div key={visit.id} className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
               <div className="flex items-center justify-between mb-4">
                 <div>
-                  <h3 className="text-lg font-bold text-slate-900">{visit.patient_name}</h3>
-                  <p className="text-xs text-slate-500">{visit.created_at ? new Date(visit.created_at).toLocaleDateString() : ''}</p>
+                  <h3 className="text-lg font-bold text-slate-900">{visit.patientName}</h3>
+                  <p className="text-xs text-slate-500">{visit.createdAt?.toDate ? visit.createdAt.toDate().toLocaleDateString() : ''}</p>
                 </div>
-                {visit.total_bill !== undefined && visit.total_bill > 0 && (
-                  <span className="text-sm font-bold text-red-600 bg-red-50 px-3 py-1 rounded-lg">Rs.{visit.total_bill}</span>
+                {visit.totalBill !== undefined && visit.totalBill > 0 && (
+                  <span className="text-sm font-bold text-red-600 bg-red-50 px-3 py-1 rounded-lg">Rs.{visit.totalBill}</span>
                 )}
               </div>
 
@@ -663,11 +663,11 @@ export default function VisitsPage() {
                 {visit.complaints && (
                   <div><h4 className="text-xs font-semibold text-slate-400 uppercase">Chief Complaints</h4><p className="text-slate-800 mt-0.5">{visit.complaints}</p></div>
                 )}
-                {visit.history_of_present_illness && (
-                  <div><h4 className="text-xs font-semibold text-slate-400 uppercase">HPI</h4><p className="text-slate-800 mt-0.5">{visit.history_of_present_illness}</p></div>
+                {visit.historyOfPresentIllness && (
+                  <div><h4 className="text-xs font-semibold text-slate-400 uppercase">HPI</h4><p className="text-slate-800 mt-0.5">{visit.historyOfPresentIllness}</p></div>
                 )}
-                {visit.examination_findings && (
-                  <div><h4 className="text-xs font-semibold text-slate-400 uppercase">Examination</h4><p className="text-slate-800 mt-0.5">{visit.examination_findings}</p></div>
+                {visit.examinationFindings && (
+                  <div><h4 className="text-xs font-semibold text-slate-400 uppercase">Examination</h4><p className="text-slate-800 mt-0.5">{visit.examinationFindings}</p></div>
                 )}
                 <div><h4 className="text-xs font-semibold text-slate-400 uppercase">Diagnosis</h4><p className="text-slate-900 font-medium mt-0.5">{visit.diagnosis}</p></div>
               </div>
@@ -706,17 +706,17 @@ export default function VisitsPage() {
                 </div>
               )}
 
-              {(visit.lab_tests || visit.investigations_advised || visit.advice || visit.referral || visit.follow_up_date) && (
+              {(visit.labTests || visit.investigationsAdvised || visit.advice || visit.referral || visit.followUpDate) && (
                 <div className="mt-3 pt-3 border-t border-slate-100 grid grid-cols-2 md:grid-cols-3 gap-3 text-sm">
-                  {visit.lab_tests && <div><span className="text-xs font-semibold text-slate-400 uppercase block">Lab Tests</span><span className="text-slate-700">{visit.lab_tests}</span></div>}
-                  {visit.investigations_advised && <div><span className="text-xs font-semibold text-slate-400 uppercase block">Investigations</span><span className="text-slate-700">{visit.investigations_advised}</span></div>}
+                  {visit.labTests && <div><span className="text-xs font-semibold text-slate-400 uppercase block">Lab Tests</span><span className="text-slate-700">{visit.labTests}</span></div>}
+                  {visit.investigationsAdvised && <div><span className="text-xs font-semibold text-slate-400 uppercase block">Investigations</span><span className="text-slate-700">{visit.investigationsAdvised}</span></div>}
                   {visit.advice && <div><span className="text-xs font-semibold text-slate-400 uppercase block">Advice</span><span className="text-slate-700">{visit.advice}</span></div>}
                   {visit.referral && <div><span className="text-xs font-semibold text-slate-400 uppercase block">Referral</span><span className="text-slate-700">{visit.referral}</span></div>}
-                  {visit.follow_up_date && <div><span className="text-xs font-semibold text-slate-400 uppercase block">Follow-up</span><span className="text-blue-600 font-medium">{visit.follow_up_date}</span></div>}
+                  {visit.followUpDate && <div><span className="text-xs font-semibold text-slate-400 uppercase block">Follow-up</span><span className="text-blue-600 font-medium">{visit.followUpDate}</span></div>}
                 </div>
               )}
 
-              <VisitImageGallery images={visit.visit_images} />
+              <VisitImageGallery images={visit.visitImages} />
             </div>
           ))}
         </div>

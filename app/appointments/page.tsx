@@ -108,10 +108,10 @@ export default function AppointmentsPage() {
       }
 
       await addAppointment({
-        patient_id: selectedPatient.id!,
-        patient_name: selectedPatient.full_name,
-        appointment_date: fd.get("date") as string,
-        time_slot: fd.get("time") as string,
+        patientId: selectedPatient.id!,
+        patientName: selectedPatient.fullName,
+        appointmentDate: fd.get("date") as string,
+        timeSlot: fd.get("time") as string,
         type: fd.get("type") as string,
         status: "scheduled",
         notes: fd.get("notes") as string || "",
@@ -169,7 +169,7 @@ export default function AppointmentsPage() {
                 setIsSaving(true);
                 try {
                   const newPatient = {
-                    full_name: name, mobile_number: mobile, case_number: nextCaseNumber || "CS-1001", treatment_type: "Allopathic" as const, gender: "Other" as const, age: 0
+                    fullName: name, mobileNumber: mobile, caseNumber: nextCaseNumber || "CS-1001", treatmentType: "Allopathic" as const, gender: "Other" as const, age: 0
                   };
                   const newId = await addPatient(newPatient);
                   const createdPatient = await getPatient(newId);
@@ -189,14 +189,14 @@ export default function AppointmentsPage() {
                   <button type="button" onClick={() => setIsQuickAddPatient(true)} className="text-xs text-blue-600 hover:text-blue-700 font-medium flex items-center"><Plus className="w-3 h-3 mr-1" /> New Patient</button>
                 )}
               </div>
-              <input type="text" value={selectedPatient ? selectedPatient.full_name : patientSearch}
+              <input type="text" value={selectedPatient ? selectedPatient.fullName : patientSearch}
                 onChange={(e) => { setPatientSearch(e.target.value); setSelectedPatient(null) }}
                 className="w-full h-10 px-3 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Search patient by name or mobile..." {...FORM_FIELD_PROPS} />
               {patientResults.length > 0 && !selectedPatient && (
                 <div className="border border-slate-200 rounded-lg max-h-32 overflow-y-auto bg-white shadow-lg">
                   {patientResults.map(p => (
                     <button type="button" key={p.id} onClick={() => { setSelectedPatient(p); setPatientSearch(""); setPatientResults([]) }}
-                      className="w-full text-left px-3 py-2 text-sm hover:bg-slate-50">{p.full_name} - {p.mobile_number}</button>
+                      className="w-full text-left px-3 py-2 text-sm hover:bg-slate-50">{p.fullName} - {p.mobileNumber}</button>
                   ))}
                 </div>
               )}
@@ -274,11 +274,11 @@ export default function AppointmentsPage() {
           {loading && <div className="p-8 text-center text-sm text-slate-500">Loading appointments...</div>}
           {!loading && appointments.length === 0 && <div className="p-8 text-center text-sm text-slate-500">No appointments for this date</div>}
           {appointments.map((apt) => (
-            <div key={apt.id} onClick={() => router.push(`/patients/${apt.patient_id}`)} className="grid grid-cols-1 lg:grid-cols-12 gap-4 p-4 hover:bg-slate-50 transition-colors items-center group cursor-pointer">
-              <div className="col-span-2"><span className="text-sm font-bold text-slate-700">{apt.time_slot}</span></div>
+            <div key={apt.id} onClick={() => router.push(`/patients/${apt.patientId}`)} className="grid grid-cols-1 lg:grid-cols-12 gap-4 p-4 hover:bg-slate-50 transition-colors items-center group cursor-pointer">
+              <div className="col-span-2"><span className="text-sm font-bold text-slate-700">{apt.timeSlot}</span></div>
               <div className="col-span-4 flex items-center gap-3">
-                <Avatar fallback={apt.patient_name?.substring(0, 2).toUpperCase()} size="sm" />
-                <span className="font-medium text-slate-900 group-hover:text-blue-600 transition-colors">{apt.patient_name}</span>
+                <Avatar fallback={apt.patientName?.substring(0, 2).toUpperCase()} size="sm" />
+                <span className="font-medium text-slate-900 group-hover:text-blue-600 transition-colors">{apt.patientName}</span>
               </div>
               <div className="col-span-3 hidden lg:block">
                 <Badge variant={apt.type === "Follow-up" ? "followup" : "new"}>{apt.type}</Badge>

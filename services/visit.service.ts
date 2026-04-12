@@ -1,44 +1,47 @@
-import { supabase } from "@/lib/supabase";
+import {
+  collection, doc, getDoc, getDocs, query, where,
+  Timestamp, runTransaction, increment,
+} from "firebase/firestore";
+import { db } from "@/lib/firebase";
 import { clearPatientCache } from "@/services/patient.service";
 import { validateVisitBasics, calculateEDD } from "@/lib/visit-validators";
 import type { Visit } from "@/lib/types";
 
+const COL = "visits";
+
 function stripUndefinedValues<T>(value: T): T {
-  if (Array.isArray(value)) return value.map((item) => stripUndefinedValues(item)) as T;
+  if (Array.isArray(value)) {
+    return value.map((item) => stripUndefinedValues(item)) as T;
+  }
+
   if (value && typeof value === "object") {
     return Object.fromEntries(
-      Object.entries(value as Record<string, unknown>)
-        .filter(([, v]) => v !== undefined)
-        .map(([k, v]) => [k, stripUndefinedValues(v)])
+      Object.entries(value)
+        .filter(([, entryValue]) => entryValue !== undefined)
+        .map(([key, entryValue]) => [key, stripUndefinedValues(entryValue)])
     ) as T;
   }
+
   return value;
 }
 
 export async function getVisits(): Promise<Visit[]> {
-  const { data, error } = await supabase
-    .from("visits")
-    .select("*")
-    .order("created_at", { ascending: false });
-
-  if (error) throw new Error(error.message);
-  return (data ?? []) as Visit[];
+  const snap = await getDocs(collection(db, COL));
+  const results = snap.docs.map(d => ({ id: d.id, ...d.data() } as Visit));
+  return results.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
 }
 
 export async function getVisitsByPatient(patientId: string): Promise<Visit[]> {
-  const { data, error } = await supabase
-    .from("visits")
-    .select("*")
-    .eq("patient_id", patientId)
-    .order("created_at", { ascending: false });
-
-  if (error) throw new Error(error.message);
-  return (data ?? []) as Visit[];
+  const q = query(collection(db, COL), where("patientId", "==", patientId));
+  const snap = await getDocs(q);
+  const results = snap.docs.map(d => ({ id: d.id, ...d.data() } as Visit));
+  return results.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
 }
 
 /**
- * Fetch the latest visit for multiple patients.
- * No Firestore 10-item limit — PostgreSQL handles it natively.
+ * Fetch the latest visit for multiple patients in batched queries.
+ * Firestore 'in' operator supports max 10 values per query,
+ * so we chunk the patient IDs accordingly.
  */
 export async function getLatestVisitsForPatients(
   patientIds: string[]
@@ -46,188 +49,235 @@ export async function getLatestVisitsForPatients(
   const result: Record<string, Visit | null> = {};
   if (patientIds.length === 0) return result;
 
-  for (const id of patientIds) result[id] = null;
-
-  const { data, error } = await supabase
-    .from("visits")
-    .select("*")
-    .in("patient_id", patientIds)
-    .order("created_at", { ascending: false });
-
-  if (error) throw new Error(error.message);
-
-  for (const visit of (data ?? []) as Visit[]) {
-    // Only keep the first (latest) one per patient
-    if (!result[visit.patient_id]) {
-      result[visit.patient_id] = visit;
-    }
+  // Initialize all to null
+  for (const id of patientIds) {
+    result[id] = null;
   }
 
+  // Firestore 'in' supports max 10 values per query
+  const CHUNK_SIZE = 10;
+  const chunks: string[][] = [];
+  for (let i = 0; i < patientIds.length; i += CHUNK_SIZE) {
+    chunks.push(patientIds.slice(i, i + CHUNK_SIZE));
+  }
+
+  const batchPromises = chunks.map(async (chunk) => {
+    const q = query(collection(db, COL), where("patientId", "in", chunk));
+    const snap = await getDocs(q);
+    const visits = snap.docs.map((d) => ({ id: d.id, ...d.data() } as Visit));
+
+    // For each patient in this chunk, find their latest visit
+    for (const pid of chunk) {
+      const patientVisits = visits
+        .filter((v) => v.patientId === pid)
+        .sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+      result[pid] = patientVisits.length > 0 ? patientVisits[0] : null;
+    }
+  });
+
+  await Promise.all(batchPromises);
   return result;
 }
 
-export async function addVisit(data: Omit<Visit, "id" | "created_at">): Promise<string> {
-  const patient_name = data.patient_name?.trim();
+export async function addVisit(data: Omit<Visit, "id" | "createdAt">): Promise<string> {
+  const patientName = data.patientName?.trim();
   const complaints = data.complaints?.trim();
   const diagnosis = data.diagnosis?.trim();
-  const total_bill = Number(data.total_bill || 0);
+  const totalBill = Number(data.totalBill || 0);
+  const sanitizedData = stripUndefinedValues({
+    ...data,
+    patientName,
+    complaints,
+    diagnosis,
+    totalBill,
+  });
 
-  if (!data.patient_id || !patient_name || !complaints || !diagnosis) {
+  if (!data.patientId || !patientName || !complaints || !diagnosis) {
     throw new Error("Patient, complaints, and diagnosis are required.");
   }
-  if (!Number.isFinite(total_bill) || total_bill < 0) {
+
+  if (!Number.isFinite(totalBill) || totalBill < 0) {
     throw new Error("Total bill must be a valid amount.");
   }
 
-  const sanitizedData = stripUndefinedValues({
-    ...data,
-    patient_name,
-    complaints,
-    diagnosis,
-    total_bill,
+  const visitRef = doc(collection(db, COL));
+  const patientRef = doc(db, "patients", data.patientId);
+
+  await runTransaction(db, async (transaction) => {
+    const patientSnap = await transaction.get(patientRef);
+    if (!patientSnap.exists()) {
+      throw new Error("Patient not found.");
+    }
+
+    transaction.set(visitRef, {
+      ...sanitizedData,
+      createdAt: Timestamp.now(),
+    });
+
+    if (totalBill > 0) {
+      if (data.paymentStatus === "paid") {
+        const paymentRef = doc(collection(db, "payments"));
+        transaction.set(paymentRef, {
+          patientId: data.patientId,
+          patientName,
+          visitId: visitRef.id,
+          amount: totalBill,
+          paymentMethod: "cash",
+          status: "paid",
+          description: "Payment for Visit",
+          date: new Date().toISOString().split("T")[0],
+          createdAt: Timestamp.now(),
+        });
+      } else {
+        transaction.update(patientRef, {
+          khataBalance: increment(-totalBill),
+          updatedAt: Timestamp.now(),
+        });
+      }
+    }
   });
 
-  // Insert the visit
-  const { data: inserted, error } = await supabase
-    .from("visits")
-    .insert(sanitizedData)
-    .select("id")
-    .single();
-
-  if (error) throw new Error(error.message);
-
-  // Handle billing
-  if (total_bill > 0) {
-    if (data.payment_status === "paid") {
-      await supabase.from("payments").insert({
-        patient_id: data.patient_id,
-        patient_name,
-        visit_id: inserted.id,
-        amount: total_bill,
-        payment_method: "cash",
-        status: "paid",
-        description: "Payment for Visit",
-        date: new Date().toISOString().split("T")[0],
-      });
-    } else {
-      // Unpaid — add to Khata (negative balance = owes money)
-      await supabase.rpc("update_khata_balance", {
-        p_id: data.patient_id,
-        p_amount: -total_bill,
-      });
-    }
-  }
-
   clearPatientCache();
-  return inserted.id;
+  return visitRef.id;
 }
 
 export async function getUpcomingFollowUps(): Promise<Visit[]> {
+  const snap = await getDocs(collection(db, COL));
   const today = new Date().toISOString().split("T")[0];
-  const { data, error } = await supabase
-    .from("visits")
-    .select("*")
-    .gte("follow_up_date", today)
-    .order("follow_up_date", { ascending: true });
-
-  if (error) throw new Error(error.message);
-  return (data ?? []) as Visit[];
+  const results = snap.docs.map(d => ({ id: d.id, ...d.data() } as Visit));
+  return results
+    .filter(v => v.followUpDate && v.followUpDate >= today)
+    .sort((a, b) => (a.followUpDate || "").localeCompare(b.followUpDate || ""));
 }
 
-export async function updateVisitImages(visitId: string, visit_images: string[]): Promise<void> {
-  if (!visitId || !Array.isArray(visit_images)) return;
-  const { error } = await supabase
-    .from("visits")
-    .update({ visit_images })
-    .eq("id", visitId);
-  if (error) throw new Error(error.message);
+export async function updateVisitImages(visitId: string, visitImages: string[]): Promise<void> {
+  if (!visitId || !Array.isArray(visitImages)) return;
+  const visitRef = doc(db, COL, visitId);
+  await runTransaction(db, async (transaction) => {
+    transaction.update(visitRef, { visitImages });
+  });
 }
 
 export async function getVisit(visitId: string): Promise<Visit | null> {
-  const { data, error } = await supabase
-    .from("visits")
-    .select("*")
-    .eq("id", visitId)
-    .single();
-
-  if (error) return null;
-  return data as Visit;
+  const visitRef = doc(db, COL, visitId);
+  const snap = await getDoc(visitRef);
+  if (!snap.exists()) return null;
+  return { id: snap.id, ...snap.data() } as Visit;
 }
 
 /**
- * Updates a visit with validation and audit trail
+ * Updates a visit with validation
+ * Maintains audit trail with isEdited, editedAt, editedBy fields
  */
 export async function updateVisit(
   visitId: string,
   updates: Partial<Visit>,
   userId: string
 ): Promise<void> {
-  if (!visitId) throw new Error("Visit ID is required");
-  if (!userId) throw new Error("User ID is required for audit trail");
+  if (!visitId) {
+    throw new Error("Visit ID is required");
+  }
 
+  if (!userId) {
+    throw new Error("User ID is required for audit trail");
+  }
+
+  // Validate the updates
   const validation = validateVisitBasics(updates);
   if (!validation.valid) {
     throw new Error(`Validation failed: ${validation.errors.join("; ")}`);
   }
 
+  const visitRef = doc(db, COL, visitId);
+
+  // Prepare the update data
   const sanitizedUpdates = stripUndefinedValues({
     ...updates,
     complaints: updates.complaints?.trim(),
     diagnosis: updates.diagnosis?.trim(),
     advice: updates.advice?.trim(),
-    past_history: updates.past_history?.trim(),
-    family_history: updates.family_history?.trim(),
-    examination_findings: updates.examination_findings?.trim(),
-    history_of_present_illness: updates.history_of_present_illness?.trim(),
-    is_edited: true,
-    edited_at: new Date().toISOString(),
-    edited_by: userId,
+    pastHistory: updates.pastHistory?.trim(),
+    familyHistory: updates.familyHistory?.trim(),
+    examinationFindings: updates.examinationFindings?.trim(),
+    historyOfPresentIllness: updates.historyOfPresentIllness?.trim(),
   });
 
-  const { error } = await supabase
-    .from("visits")
-    .update(sanitizedUpdates)
-    .eq("id", visitId);
+  // Add audit trail
+  const auditUpdate = {
+    ...sanitizedUpdates,
+    isEdited: true,
+    editedAt: Timestamp.now(),
+    editedBy: userId,
+  };
 
-  if (error) throw new Error(error.message);
+  await runTransaction(db, async (transaction) => {
+    const visitSnap = await transaction.get(visitRef);
+    if (!visitSnap.exists()) {
+      throw new Error("Visit not found");
+    }
+
+    transaction.update(visitRef, auditUpdate);
+  });
+
   clearPatientCache();
 }
 
+/**
+ * Deletes a medicine from a visit's prescription list
+ */
 export async function removeMedicineFromVisit(
   visitId: string,
   medicineIndex: number,
   userId: string
 ): Promise<void> {
   const visit = await getVisit(visitId);
-  if (!visit) throw new Error("Visit not found");
+  if (!visit) {
+    throw new Error("Visit not found");
+  }
+
   const updatedPrescriptions = visit.prescriptions?.filter((_, idx) => idx !== medicineIndex) || [];
+
   await updateVisit(visitId, { prescriptions: updatedPrescriptions }, userId);
 }
 
+/**
+ * Adds a new medicine to a visit's prescription list
+ */
 export async function addMedicineToVisit(
   visitId: string,
-  medicine: any,
+  medicine: any, // Medicine type
   userId: string
 ): Promise<void> {
   const visit = await getVisit(visitId);
-  if (!visit) throw new Error("Visit not found");
+  if (!visit) {
+    throw new Error("Visit not found");
+  }
+
   const updatedPrescriptions = [...(visit.prescriptions || []), medicine];
+
   await updateVisit(visitId, { prescriptions: updatedPrescriptions }, userId);
 }
 
+/**
+ * Updates a specific medicine in a visit's prescription list
+ */
 export async function updateMedicineInVisit(
   visitId: string,
   medicineIndex: number,
-  medicine: any,
+  medicine: any, // Medicine type
   userId: string
 ): Promise<void> {
   const visit = await getVisit(visitId);
-  if (!visit) throw new Error("Visit not found");
+  if (!visit) {
+    throw new Error("Visit not found");
+  }
+
   const updatedPrescriptions = [...(visit.prescriptions || [])];
   if (medicineIndex >= 0 && medicineIndex < updatedPrescriptions.length) {
     updatedPrescriptions[medicineIndex] = medicine;
   } else {
     throw new Error("Invalid medicine index");
   }
+
   await updateVisit(visitId, { prescriptions: updatedPrescriptions }, userId);
 }

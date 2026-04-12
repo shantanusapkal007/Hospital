@@ -137,11 +137,11 @@ export function validateVisitBasics(data: Partial<Visit>): { valid: boolean; err
     errors.push("Diagnosis is required");
   }
 
-  if (data.total_bill !== undefined && (Number(data.total_bill) < 0 || !Number.isFinite(Number(data.total_bill)))) {
+  if (data.totalBill !== undefined && (Number(data.totalBill) < 0 || !Number.isFinite(Number(data.totalBill)))) {
     errors.push("Total bill must be a valid non-negative amount");
   }
 
-  const followUpValidation = validateFollowUpDate(data.follow_up_date);
+  const followUpValidation = validateFollowUpDate(data.followUpDate);
   if (!followUpValidation.valid) {
     errors.push(`Follow-up: ${followUpValidation.error}`);
   }
@@ -201,7 +201,7 @@ export function getVisitChangeSummary(
     changes.push("Advice updated");
   }
 
-  if (updated.follow_up_date && updated.follow_up_date !== original.follow_up_date) {
+  if (updated.followUpDate && updated.followUpDate !== original.followUpDate) {
     changes.push("Follow-up date updated");
   }
 

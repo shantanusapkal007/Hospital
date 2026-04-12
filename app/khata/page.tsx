@@ -37,15 +37,15 @@ export default function KhataBookPage() {
   }, [])
 
   const handleClearDue = async (patient: Patient) => {
-    if (!patient.id || !patient.khata_balance || patient.khata_balance >= 0) return;
-    const maxAmount = Math.abs(patient.khata_balance);
+    if (!patient.id || !patient.khataBalance || patient.khataBalance >= 0) return;
+    const maxAmount = Math.abs(patient.khataBalance);
     setClearDuePatient(patient)
     setClearDueAmount(maxAmount.toString())
   }
 
   const submitClearDue = async () => {
     if (!clearDuePatient?.id) return;
-    const maxAmount = Math.abs(clearDuePatient.khata_balance || 0);
+    const maxAmount = Math.abs(clearDuePatient.khataBalance || 0);
     const amount = Number(clearDueAmount);
     if (isNaN(amount) || amount <= 0) {
       showToast("Please enter a valid amount greater than 0.", "warning");
@@ -59,10 +59,10 @@ export default function KhataBookPage() {
     setClearingId(clearDuePatient.id);
     try {
       await addPayment({
-        patient_id: clearDuePatient.id,
-        patient_name: clearDuePatient.full_name,
+        patientId: clearDuePatient.id,
+        patientName: clearDuePatient.fullName,
         amount: amount,
-        payment_method: "cash",
+        paymentMethod: "cash",
         status: "paid",
         description: amount === maxAmount ? "Cleared Khata Due" : "Partial Khata Payment",
         date: new Date().toISOString().split("T")[0],
@@ -70,7 +70,7 @@ export default function KhataBookPage() {
       
       const data = await getKhataPatients();
       setPatients(data);
-      showToast(`₹${amount} received from ${clearDuePatient.full_name}`, "success");
+      showToast(`₹${amount} received from ${clearDuePatient.fullName}`, "success");
     } catch (e: any) {
       showToast(e.message || "Failed to clear due", "error");
     } finally {
@@ -80,11 +80,11 @@ export default function KhataBookPage() {
     }
   }
 
-  const totalOwed = patients.reduce((sum, p) => (p.khata_balance ?? 0) < 0 ? sum + Math.abs(p.khata_balance ?? 0) : sum, 0)
-  const totalAdvance = patients.reduce((sum, p) => (p.khata_balance ?? 0) > 0 ? sum + (p.khata_balance ?? 0) : sum, 0)
+  const totalOwed = patients.reduce((sum, p) => (p.khataBalance ?? 0) < 0 ? sum + Math.abs(p.khataBalance ?? 0) : sum, 0)
+  const totalAdvance = patients.reduce((sum, p) => (p.khataBalance ?? 0) > 0 ? sum + (p.khataBalance ?? 0) : sum, 0)
 
-  const dues = patients.filter(p => (p.khata_balance ?? 0) < 0)
-  const advances = patients.filter(p => (p.khata_balance ?? 0) > 0)
+  const dues = patients.filter(p => (p.khataBalance ?? 0) < 0)
+  const advances = patients.filter(p => (p.khataBalance ?? 0) > 0)
 
   return (
     <div className="space-y-6">
@@ -99,13 +99,13 @@ export default function KhataBookPage() {
       </div>
 
       {/* Clear Due Modal */}
-      <Modal isOpen={!!clearDuePatient} onClose={() => { setClearDuePatient(null); setClearDueAmount(""); }} title={`Receive Payment — ${clearDuePatient?.full_name || ""}`}>
+      <Modal isOpen={!!clearDuePatient} onClose={() => { setClearDuePatient(null); setClearDueAmount(""); }} title={`Receive Payment — ${clearDuePatient?.fullName || ""}`}>
         <div className="space-y-4">
-          <p className="text-sm text-slate-600">Enter amount received from <strong>{clearDuePatient?.full_name}</strong>:</p>
+          <p className="text-sm text-slate-600">Enter amount received from <strong>{clearDuePatient?.fullName}</strong>:</p>
           <div className="space-y-1.5">
             <label className="text-sm font-medium text-slate-700">Amount (₹)</label>
-            <input type="number" value={clearDueAmount} onChange={(e) => setClearDueAmount(e.target.value)} className="w-full h-10 px-3 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Enter amount" max={clearDuePatient ? Math.abs(clearDuePatient.khata_balance || 0) : undefined} min={1} />
-            <p className="text-xs text-slate-400">Max: ₹{clearDuePatient ? Math.abs(clearDuePatient.khata_balance || 0) : 0}</p>
+            <input type="number" value={clearDueAmount} onChange={(e) => setClearDueAmount(e.target.value)} className="w-full h-10 px-3 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Enter amount" max={clearDuePatient ? Math.abs(clearDuePatient.khataBalance || 0) : undefined} min={1} />
+            <p className="text-xs text-slate-400">Max: ₹{clearDuePatient ? Math.abs(clearDuePatient.khataBalance || 0) : 0}</p>
           </div>
           <div className="pt-2 flex justify-end gap-2">
             <Button type="button" variant="outline" onClick={() => { setClearDuePatient(null); setClearDueAmount(""); }}>Cancel</Button>
@@ -154,23 +154,23 @@ export default function KhataBookPage() {
             {dues.map((p) => (
               <div key={p.id} className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-slate-50 transition-colors">
                 <div className="flex items-center gap-4">
-                  <Avatar fallback={p.full_name.substring(0, 2).toUpperCase()} size="md" />
+                  <Avatar fallback={p.fullName.substring(0, 2).toUpperCase()} size="md" />
                   <div>
-                    <h4 className="font-medium text-slate-900">{p.full_name}</h4>
-                    <p className="text-xs text-slate-500">{p.mobile_number} • Case: {p.case_number}</p>
+                    <h4 className="font-medium text-slate-900">{p.fullName}</h4>
+                    <p className="text-xs text-slate-500">{p.mobileNumber} • Case: {p.caseNumber}</p>
                   </div>
                 </div>
                 <div className="flex items-center justify-between sm:justify-end gap-6 sm:w-auto w-full">
                   <div className="text-right">
                     <span className="text-xs font-semibold text-slate-500 uppercase block mb-0.5">Owes</span>
-                    <span className="text-lg font-bold text-red-600">₹{Math.abs(p.khata_balance || 0)}</span>
+                    <span className="text-lg font-bold text-red-600">₹{Math.abs(p.khataBalance || 0)}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Button variant="outline" size="sm" className="bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100" onClick={() => handleClearDue(p)} disabled={clearingId === p.id}>
                       {clearingId === p.id ? "Clearing..." : "Clear Due"}
                     </Button>
                     <Button variant="outline" size="sm" className="bg-green-50 text-green-700 border-green-200 hover:bg-green-100" onClick={() => {
-                        window.open(`https://wa.me/91${p.mobile_number}?text=Hello ${p.full_name.split(' ')[0]}, this is a gentle reminder from our clinic regarding a pending balance of Rs. ${Math.abs(p.khata_balance || 0)} on your Khata account.`, '_blank')
+                        window.open(`https://wa.me/91${p.mobileNumber}?text=Hello ${p.fullName.split(' ')[0]}, this is a gentle reminder from our clinic regarding a pending balance of Rs. ${Math.abs(p.khataBalance || 0)} on your Khata account.`, '_blank')
                     }}>
                       <MessageSquare className="w-4 h-4 sm:mr-2" />
                       <span className="hidden sm:inline">WhatsApp</span>
@@ -200,15 +200,15 @@ export default function KhataBookPage() {
             {advances.map((p) => (
               <div key={p.id} className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-slate-50 transition-colors">
                 <div className="flex items-center gap-4">
-                  <Avatar fallback={p.full_name.substring(0, 2).toUpperCase()} size="md" />
+                  <Avatar fallback={p.fullName.substring(0, 2).toUpperCase()} size="md" />
                   <div>
-                    <h4 className="font-medium text-slate-900">{p.full_name}</h4>
+                    <h4 className="font-medium text-slate-900">{p.fullName}</h4>
                   </div>
                 </div>
                 <div className="flex items-center justify-between sm:justify-end gap-6">
                   <div className="text-right">
                     <span className="text-xs font-semibold text-slate-500 uppercase block mb-0.5">Advance</span>
-                    <span className="text-lg font-bold text-green-600">₹{p.khata_balance}</span>
+                    <span className="text-lg font-bold text-green-600">₹{p.khataBalance}</span>
                   </div>
                   <Link href={`/patients/${p.id}`}>
                     <Button variant="outline" size="sm">

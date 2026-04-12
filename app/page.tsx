@@ -100,14 +100,14 @@ export default function DashboardPage() {
                 <button
                   key={appointment.id}
                   type="button"
-                  onClick={() => router.push(`/patients/${appointment.patient_id}`)}
+                  onClick={() => router.push(`/patients/${appointment.patientId}`)}
                   className="flex w-full items-center justify-between gap-4 p-4 text-left transition-colors hover:bg-slate-50"
                 >
                   <div className="flex min-w-0 items-center gap-4">
-                    <div className="w-14 shrink-0 text-sm font-semibold text-slate-900">{appointment.time_slot}</div>
-                    <Avatar fallback={appointment.patient_name.substring(0, 2).toUpperCase()} size="md" />
+                    <div className="w-14 shrink-0 text-sm font-semibold text-slate-900">{appointment.timeSlot}</div>
+                    <Avatar fallback={appointment.patientName.substring(0, 2).toUpperCase()} size="md" />
                     <div className="min-w-0">
-                      <p className="truncate text-sm font-medium text-slate-900">{appointment.patient_name}</p>
+                      <p className="truncate text-sm font-medium text-slate-900">{appointment.patientName}</p>
                       <Badge variant={appointment.type === "Follow-up" ? "followup" : "new"} className="mt-1">
                         {appointment.type}
                       </Badge>
@@ -140,15 +140,15 @@ export default function DashboardPage() {
               {recentPatients.map((patient) => (
                 <Link key={patient.id} href={`/patients/${patient.id}`} className="flex items-center justify-between gap-3 p-4 transition-colors hover:bg-slate-50">
                   <div className="flex min-w-0 items-center gap-3">
-                    <Avatar fallback={patient.full_name.substring(0, 2).toUpperCase()} size="md" />
+                    <Avatar fallback={patient.fullName.substring(0, 2).toUpperCase()} size="md" />
                     <div className="min-w-0">
                       <div className="flex flex-wrap items-center gap-2">
-                        <p className="truncate text-sm font-medium text-slate-900">{patient.full_name}</p>
-                        <Badge variant="outline" className={getTreatmentType(patient.case_number, patient.treatment_type) === "Homeopathic" ? "border-green-200 bg-green-50 text-green-700" : "border-blue-200 bg-blue-50 text-blue-700"}>
-                          {getTreatmentType(patient.case_number, patient.treatment_type)}
+                        <p className="truncate text-sm font-medium text-slate-900">{patient.fullName}</p>
+                        <Badge variant="outline" className={getTreatmentType(patient.caseNumber, patient.treatmentType) === "Homeopathic" ? "border-green-200 bg-green-50 text-green-700" : "border-blue-200 bg-blue-50 text-blue-700"}>
+                          {getTreatmentType(patient.caseNumber, patient.treatmentType)}
                         </Badge>
                       </div>
-                      <p className="truncate text-xs text-slate-500">{patient.mobile_number}</p>
+                      <p className="truncate text-xs text-slate-500">{patient.mobileNumber}</p>
                     </div>
                   </div>
                   <ChevronRight className="h-4 w-4 shrink-0 text-slate-400" />
@@ -170,11 +170,11 @@ export default function DashboardPage() {
               <button
                 key={followUp.id}
                 type="button"
-                onClick={() => router.push(`/patients/${followUp.patient_id}`)}
+                onClick={() => router.push(`/patients/${followUp.patientId}`)}
                 className="grid w-full gap-2 p-4 text-left transition-colors hover:bg-slate-50 sm:grid-cols-[140px,1fr,1fr]"
               >
-                <span className="text-sm font-medium text-slate-900">{followUp.follow_up_date}</span>
-                <span className="truncate text-sm font-medium text-slate-900">{followUp.patient_name}</span>
+                <span className="text-sm font-medium text-slate-900">{followUp.followUpDate}</span>
+                <span className="truncate text-sm font-medium text-slate-900">{followUp.patientName}</span>
                 <span className="truncate text-sm text-slate-500">{followUp.diagnosis}</span>
               </button>
             ))}

@@ -54,7 +54,7 @@ export function EditVisitModal({ isOpen, visit, userId, onClose, onSaved }: Edit
       const notes = (fd.get("notes") as string)?.trim()
       const advice = (fd.get("advice") as string)?.trim()
       const lmp = fd.get("lmp") as string
-      const follow_up_date = fd.get("followUpDate") as string || ""
+      const followUpDate = fd.get("followUpDate") as string || ""
 
       // Validate required fields
       if (!complaints) {
@@ -89,8 +89,8 @@ export function EditVisitModal({ isOpen, visit, userId, onClose, onSaved }: Edit
       }
 
       // Validate follow-up date
-      if (follow_up_date) {
-        const followUpDateObj = new Date(follow_up_date)
+      if (followUpDate) {
+        const followUpDateObj = new Date(followUpDate)
         const today = new Date()
         today.setHours(0, 0, 0, 0)
         if (followUpDateObj < today) {
@@ -105,7 +105,7 @@ export function EditVisitModal({ isOpen, visit, userId, onClose, onSaved }: Edit
         diagnosis,
         advice,
         prescriptions: medicines.length > 0 ? medicines : [],
-        follow_up_date: follow_up_date || undefined,
+        followUpDate: followUpDate || undefined,
       }
 
       await updateVisit(visit.id!, updateData, userId)
@@ -269,7 +269,7 @@ export function EditVisitModal({ isOpen, visit, userId, onClose, onSaved }: Edit
           <input
             type="date"
             name="followUpDate"
-            defaultValue={visit.follow_up_date || ""}
+            defaultValue={visit.followUpDate || ""}
             className={ic}
             {...FORM_FIELD_PROPS}
           />

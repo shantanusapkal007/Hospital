@@ -117,8 +117,8 @@ export function CommandPalette() {
 
   const patientCommands = useMemo<CommandItem[]>(() => patients.map(p => ({
     id: `patient-${p.id}`,
-    title: p.full_name,
-    description: `Case: ${p.case_number} | ${p.mobile_number}`,
+    title: p.fullName,
+    description: `Case: ${p.caseNumber} | ${p.mobileNumber}`,
     icon: <Users className="w-4 h-4" />,
     action: () => { router.push(`/patients/${p.id}`); setIsOpen(false) },
     category: "Patients"

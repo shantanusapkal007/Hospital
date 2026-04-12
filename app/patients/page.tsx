@@ -116,18 +116,18 @@ export default function PatientsPage() {
       }
 
       const patientData: any = {
-        caseNumber: fd.get("caseNumber") as string,
-        treatmentType: fd.get("treatmentType") as TreatmentType,
-        fullName: `${fd.get("firstName")} ${fd.get("lastName")}`,
-        mobileNumber: fd.get("mobile") as string,
-        alternateMobile: fd.get("alternateMobile") as string || "",
+        case_number: fd.get("case_number") as string,
+        treatment_type: fd.get("treatment_type") as TreatmentType,
+        full_name: `${fd.get("firstName")} ${fd.get("lastName")}`,
+        mobile_number: fd.get("mobile") as string,
+        alternate_mobile: fd.get("alternate_mobile") as string || "",
         gender: selectedGender as "Male" | "Female" | "Other",
-        dateOfBirth: fd.get("dob") as string || "",
+        date_of_birth: fd.get("dob") as string || "",
         age: parseInt(fd.get("age") as string) || 0,
-        bloodGroup: fd.get("bloodGroup") as string || "",
+        blood_group: fd.get("blood_group") as string || "",
         email: fd.get("email") as string || "",
         occupation: fd.get("occupation") as string || "",
-        maritalStatus: fd.get("maritalStatus") as string || "",
+        marital_status: fd.get("marital_status") as string || "",
         address: {
           line1: fd.get("addressLine1") as string || "",
           city: fd.get("city") as string || "",
@@ -135,16 +135,16 @@ export default function PatientsPage() {
           pincode: fd.get("pincode") as string || "",
         },
         allergies: fd.get("allergies") as string || "",
-        chronicDiseases: fd.get("chronicDiseases") as string || "",
-        emergencyContact: fd.get("emergencyContact") as string || "",
-        currentMedicines: regMedicines.filter(m => m.name.trim() !== ""),
+        chronic_diseases: fd.get("chronic_diseases") as string || "",
+        emergency_contact: fd.get("emergency_contact") as string || "",
+        current_medicines: regMedicines.filter(m => m.name.trim() !== ""),
         notes: fd.get("notes") as string || "",
       };
 
       if (photoURL) patientData.photo = photoURL;
       if (selectedGender === "Female") {
         patientData.lmp = fd.get("lmp") as string || "";
-        patientData.menstrualCycleDays = parseInt(fd.get("menstrualCycleDays") as string) || null;
+        patientData.menstrual_cycle_days = parseInt(fd.get("menstrual_cycle_days") as string) || null;
       }
 
       await addPatient(patientData)
@@ -199,7 +199,7 @@ export default function PatientsPage() {
           {/* Basic Info */}
           <h4 className={sectionTitle}>Basic Information</h4>
           <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1"><label className={labelClass}>Case Number *</label><input required name="caseNumber" type="text" className={inputClass} placeholder="CS-1006" {...FORM_FIELD_PROPS} /></div>
+            <div className="space-y-1"><label className={labelClass}>Case Number *</label><input required name="case_number" type="text" className={inputClass} placeholder="CS-1006" {...FORM_FIELD_PROPS} /></div>
             <div className="space-y-1"><label className={labelClass}>Mobile Number *</label><input required name="mobile" type="tel" className={inputClass} placeholder="9876543210" {...FORM_FIELD_PROPS} /></div>
           </div>
           <div className="grid grid-cols-2 gap-3">
@@ -216,14 +216,14 @@ export default function PatientsPage() {
             </div>
             <div className="space-y-1 col-span-2">
               <label className={labelClass}>Treatment Type *</label>
-              <select name="treatmentType" value={selectedTreatmentType} onChange={(e) => setSelectedTreatmentType(e.target.value as TreatmentType)} className={inputClass} required {...FORM_FIELD_PROPS}>
+              <select name="treatment_type" value={selectedTreatmentType} onChange={(e) => setSelectedTreatmentType(e.target.value as TreatmentType)} className={inputClass} required {...FORM_FIELD_PROPS}>
                 <option value="Allopathic">Allopathic</option>
                 <option value="Homeopathic">Homeopathic</option>
               </select>
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1"><label className={labelClass}>Blood Group</label><input name="bloodGroup" type="text" className={inputClass} placeholder="B+" {...FORM_FIELD_PROPS} /></div>
+            <div className="space-y-1"><label className={labelClass}>Blood Group</label><input name="blood_group" type="text" className={inputClass} placeholder="B+" {...FORM_FIELD_PROPS} /></div>
             <div className="space-y-1"><label className={labelClass}>DOB</label><input name="dob" type="date" className={inputClass} {...FORM_FIELD_PROPS} /></div>
           </div>
 
@@ -236,7 +236,7 @@ export default function PatientsPage() {
                 </div>
                 <div className="space-y-1">
                   <label className="text-sm font-medium text-pink-800">Cycle Length (days)</label>
-                  <input name="menstrualCycleDays" type="number" className={inputClass} placeholder="28" {...FORM_FIELD_PROPS} />
+                  <input name="menstrual_cycle_days" type="number" className={inputClass} placeholder="28" {...FORM_FIELD_PROPS} />
                 </div>
               </div>
             </div>
@@ -245,11 +245,11 @@ export default function PatientsPage() {
           {/* Contact */}
           <h4 className={sectionTitle}>Contact Details</h4>
           <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1"><label className={labelClass}>Alternate Mobile</label><input name="alternateMobile" type="tel" className={inputClass} placeholder="Alternate number" {...FORM_FIELD_PROPS} /></div>
+            <div className="space-y-1"><label className={labelClass}>Alternate Mobile</label><input name="alternate_mobile" type="tel" className={inputClass} placeholder="Alternate number" {...FORM_FIELD_PROPS} /></div>
             <div className="space-y-1"><label className={labelClass}>Email</label><input name="email" type="email" className={inputClass} placeholder="patient@email.com" {...FORM_FIELD_PROPS} /></div>
           </div>
           <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1"><label className={labelClass}>Emergency Contact</label><input name="emergencyContact" type="tel" className={inputClass} placeholder="Emergency number" {...FORM_FIELD_PROPS} /></div>
+            <div className="space-y-1"><label className={labelClass}>Emergency Contact</label><input name="emergency_contact" type="tel" className={inputClass} placeholder="Emergency number" {...FORM_FIELD_PROPS} /></div>
             <div className="space-y-1"><label className={labelClass}>Occupation</label><input name="occupation" type="text" className={inputClass} placeholder="e.g. Teacher" {...FORM_FIELD_PROPS} /></div>
           </div>
 
@@ -267,13 +267,13 @@ export default function PatientsPage() {
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
               <label className={labelClass}>Marital Status</label>
-              <select name="maritalStatus" className={inputClass} {...FORM_FIELD_PROPS}>
+              <select name="marital_status" className={inputClass} {...FORM_FIELD_PROPS}>
                 <option value="">Select</option><option value="Single">Single</option><option value="Married">Married</option><option value="Divorced">Divorced</option><option value="Widowed">Widowed</option>
               </select>
             </div>
             <div className="space-y-1"><label className={labelClass}>Allergies</label><input name="allergies" type="text" className={inputClass} placeholder="e.g. Penicillin" {...FORM_FIELD_PROPS} /></div>
           </div>
-          <div className="space-y-1"><label className={labelClass}>Chronic Diseases</label><input name="chronicDiseases" type="text" className={inputClass} placeholder="e.g. Diabetes, Hypertension" {...FORM_FIELD_PROPS} /></div>
+          <div className="space-y-1"><label className={labelClass}>Chronic Diseases</label><input name="chronic_diseases" type="text" className={inputClass} placeholder="e.g. Diabetes, Hypertension" {...FORM_FIELD_PROPS} /></div>
           <div className="space-y-1"><label className={labelClass}>Notes</label><textarea name="notes" className="w-full p-3 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" rows={2} placeholder="Any additional notes..." {...FORM_FIELD_PROPS} /></div>
 
           {/* Current Medicines */}
@@ -319,15 +319,15 @@ export default function PatientsPage() {
           </thead>
           <tbody className="divide-y divide-slate-100">
             {patients.map((patient) => {
-              const treatmentType = getTreatmentType(patient.caseNumber, patient.treatmentType)
+              const treatment_type = getTreatmentType(patient.case_number, patient.treatment_type)
               const latestVisit = patient.id ? patientVisits[patient.id] : null
 
               return (
                 <tr key={patient.id} onClick={() => router.push(`/patients/${patient.id}`)} className="hover:bg-slate-50 transition-colors cursor-pointer group">
                   <td className="px-4 py-3 text-blue-600">
-                    <span className="font-bold">{patient.caseNumber}</span>
-                    <Badge variant="outline" className={`ml-2 text-[10px] px-1.5 py-0 font-bold ${treatmentType === 'Homeopathic' ? 'border-green-200 text-green-700 bg-green-50' : 'border-blue-200 text-blue-700 bg-blue-50'}`}>
-                      {treatmentType.substring(0, 5)}
+                    <span className="font-bold">{patient.case_number}</span>
+                    <Badge variant="outline" className={`ml-2 text-[10px] px-1.5 py-0 font-bold ${treatment_type === 'Homeopathic' ? 'border-green-200 text-green-700 bg-green-50' : 'border-blue-200 text-blue-700 bg-blue-50'}`}>
+                      {treatment_type.substring(0, 5)}
                     </Badge>
                   </td>
                   <td className="px-4 py-3">
@@ -337,17 +337,17 @@ export default function PatientsPage() {
                         <Image src={patient.photo} alt="" fill unoptimized sizes="32px" className="object-cover" />
                       </div>
                     ) : (
-                      <Avatar fallback={patient.fullName?.substring(0, 2).toUpperCase()} size="sm" />
+                      <Avatar fallback={patient.full_name?.substring(0, 2).toUpperCase()} size="sm" />
                     )}
                       <div className="min-w-0">
-                        <span className="font-medium text-slate-900 group-hover:text-blue-600 transition-colors block">{patient.fullName}</span>
+                        <span className="font-medium text-slate-900 group-hover:text-blue-600 transition-colors block">{patient.full_name}</span>
                         {patient.allergies && <span className="text-xs text-red-500">Allergy: {patient.allergies}</span>}
                       </div>
                     </div>
                   </td>
-                  <td className="px-4 py-3 text-slate-600">{patient.mobileNumber}</td>
+                  <td className="px-4 py-3 text-slate-600">{patient.mobile_number}</td>
                   <td className="px-4 py-3 text-slate-600">{patient.age}{patient.gender?.[0] ? `/${patient.gender[0]}` : ""}</td>
-                  <td className="px-4 py-3 text-slate-600">{patient.bloodGroup || "-"}</td>
+                  <td className="px-4 py-3 text-slate-600">{patient.blood_group || "-"}</td>
                   <td className="px-4 py-3 text-slate-600">{patient.address?.city || "-"}</td>
                   <td className="px-4 py-3 text-xs">
                     {latestVisit ? (
@@ -378,9 +378,9 @@ export default function PatientsPage() {
                     )}
                   </td>
                   <td className="px-4 py-3">
-                    {(patient.khataBalance ?? 0) !== 0 ? (
-                      <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${(patient.khataBalance || 0) < 0 ? 'bg-red-50 text-red-600' : 'bg-green-50 text-green-600'}`}>
-                        {(patient.khataBalance || 0) < 0 ? `Due ${formatCurrency(Math.abs(patient.khataBalance || 0))}` : `Advance ${formatCurrency(patient.khataBalance || 0)}`}
+                    {(patient.khata_balance ?? 0) !== 0 ? (
+                      <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${(patient.khata_balance || 0) < 0 ? 'bg-red-50 text-red-600' : 'bg-green-50 text-green-600'}`}>
+                        {(patient.khata_balance || 0) < 0 ? `Due ${formatCurrency(Math.abs(patient.khata_balance || 0))}` : `Advance ${formatCurrency(patient.khata_balance || 0)}`}
                       </span>
                     ) : <span className="text-xs text-slate-400">Clear</span>}
                   </td>
@@ -397,7 +397,7 @@ export default function PatientsPage() {
       {/* Mobile Card View */}
       <div className="lg:hidden space-y-3">
         {patients.map((patient) => {
-          const treatmentType = getTreatmentType(patient.caseNumber, patient.treatmentType)
+          const treatment_type = getTreatmentType(patient.case_number, patient.treatment_type)
           const latestVisit = patient.id ? patientVisits[patient.id] : null
 
           return (
@@ -409,22 +409,22 @@ export default function PatientsPage() {
                     <Image src={patient.photo} alt="" fill unoptimized sizes="40px" className="object-cover" />
                   </div>
                 ) : (
-                  <Avatar fallback={patient.fullName?.substring(0, 2).toUpperCase()} size="md" />
+                  <Avatar fallback={patient.full_name?.substring(0, 2).toUpperCase()} size="md" />
                 )}
                   <div>
-                    <h3 className="font-medium text-slate-900">{patient.fullName}</h3>
-                    <p className="text-sm text-slate-500 mt-0.5">{patient.mobileNumber}</p>
+                    <h3 className="font-medium text-slate-900">{patient.full_name}</h3>
+                    <p className="text-sm text-slate-500 mt-0.5">{patient.mobile_number}</p>
                   </div>
                 </div>
                 <ChevronRight className="w-5 h-5 text-slate-400" />
               </div>
               <div className="mt-3 flex items-center justify-between text-sm text-slate-600">
-                <span>{patient.age} yrs | {patient.gender}{patient.bloodGroup ? ` | ${patient.bloodGroup}` : ""}</span>
+                <span>{patient.age} yrs | {patient.gender}{patient.blood_group ? ` | ${patient.blood_group}` : ""}</span>
                 <div className="flex items-center gap-2">
-                  <Badge variant="outline" className={`text-[10px] px-1.5 py-0 font-bold ${treatmentType === 'Homeopathic' ? 'border-green-200 text-green-700 bg-green-50' : 'border-blue-200 text-blue-700 bg-blue-50'}`}>
-                    {treatmentType}
+                  <Badge variant="outline" className={`text-[10px] px-1.5 py-0 font-bold ${treatment_type === 'Homeopathic' ? 'border-green-200 text-green-700 bg-green-50' : 'border-blue-200 text-blue-700 bg-blue-50'}`}>
+                    {treatment_type}
                   </Badge>
-                  <span className="text-blue-600 font-bold">{patient.caseNumber}</span>
+                  <span className="text-blue-600 font-bold">{patient.case_number}</span>
                 </div>
               </div>
               
@@ -460,10 +460,10 @@ export default function PatientsPage() {
                 </div>
               )}
               
-              {(patient.khataBalance ?? 0) !== 0 && (
+              {(patient.khata_balance ?? 0) !== 0 && (
                 <div className="mt-3">
-                  <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${(patient.khataBalance || 0) < 0 ? 'bg-red-50 text-red-600' : 'bg-green-50 text-green-600'}`}>
-                    Khata: {(patient.khataBalance || 0) < 0 ? `Due ${formatCurrency(Math.abs(patient.khataBalance || 0))}` : `Advance ${formatCurrency(patient.khataBalance || 0)}`}
+                  <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${(patient.khata_balance || 0) < 0 ? 'bg-red-50 text-red-600' : 'bg-green-50 text-green-600'}`}>
+                    Khata: {(patient.khata_balance || 0) < 0 ? `Due ${formatCurrency(Math.abs(patient.khata_balance || 0))}` : `Advance ${formatCurrency(patient.khata_balance || 0)}`}
                   </span>
                 </div>
               )}

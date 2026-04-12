@@ -10,7 +10,7 @@ import { EditVisitModal } from "@/components/visits/edit-visit-modal"
 import { VisitCard } from "@/components/visits/visit-card"
 import { VisitImageGallery } from "@/components/visits/visit-image-gallery"
 import { FORM_FIELD_PROPS, FORM_PROPS } from "@/lib/form-defaults"
-import { formatCurrency, getTreatmentType } from "@/lib/utils"
+import { cn, formatCurrency, getTreatmentType } from "@/lib/utils"
 import { useAuth } from "@/components/providers/AuthProvider"
 import Image from "next/image"
 import Link from "next/link"
@@ -62,6 +62,17 @@ export default function PatientDetailPage() {
   const { showToast } = useToast()
 
   const buildMedicineDraft = () => [] as Medicine[]
+
+  const buildEmptyClinicalDetailsFormData = () => ({
+    presentComplaints: "",
+    weight: "",
+    heightCm: "",
+    bp: "",
+    temperature: "",
+    spo2: "",
+    repetition: "",
+    lmp: "",
+  })
 
   const buildClinicalDetailsFormData = (nextPatient: Patient | null) => ({
     presentComplaints: "",
@@ -219,7 +230,7 @@ export default function PatientDetailPage() {
       await updatePatient(patient.id, updateData)
       const updated = await getPatient(patient.id)
       setPatient(updated)
-      setClinicalDetailsFormData(buildClinicalDetailsFormData(updated))
+      setClinicalDetailsFormData(buildEmptyClinicalDetailsFormData())
       showToast("Clinical details saved", "success")
     } catch (e: any) {
       showToast(e.message || "Failed to save clinical details", "error")
@@ -253,7 +264,7 @@ export default function PatientDetailPage() {
   const nameParts = patient.fullName?.split(" ") || [""]
   const firstName = nameParts[0] || ""
   const lastName = nameParts.slice(1).join(" ") || ""
-  const ic = "w-full h-10 px-3 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+  const ic = "w-full h-10 rounded-xl border border-slate-200 bg-white/90 px-3 text-sm text-slate-800 shadow-sm transition focus:outline-none focus:ring-2 focus:ring-sky-500"
   const patientTreatmentType = getTreatmentType(patient.caseNumber, patient.treatmentType)
   const savedMedicines = patient.currentMedicines || []
   const normalizedSavedMedicines = sanitizeMedicines(savedMedicines)
@@ -274,9 +285,67 @@ export default function PatientDetailPage() {
   const previousComplaint = visits.length > 0 ? visits[0].complaints : "";
   const hasClinicalDetails = clinicalSummaryItems.some((item) => item.value !== "-") || Boolean(patient.presentComplaints) || Boolean(previousComplaint)
   const hasPatientCareSummary = hasClinicalDetails || hasSavedMedicines
+  const khataBalance = patient.khataBalance || 0
+  const khataLabel = khataBalance < 0
+    ? `Due ${formatCurrency(Math.abs(khataBalance))}`
+    : khataBalance > 0
+      ? `Advance ${formatCurrency(khataBalance)}`
+      : "Clear"
+  const patientStats = [
+    {
+      label: "Visits",
+      value: String(visits.length),
+      hint: visits.length > 0 ? "Case papers recorded" : "No visits yet",
+      icon: Activity,
+      shell: "border-sky-200/80 bg-gradient-to-br from-sky-100 via-white to-blue-50 text-sky-900",
+      iconShell: "bg-sky-600 text-white shadow-sky-200",
+    },
+    {
+      label: "Appointments",
+      value: String(appointments.length),
+      hint: appointments.length > 0 ? "Scheduled history" : "Nothing booked yet",
+      icon: Calendar,
+      shell: "border-amber-200/80 bg-gradient-to-br from-amber-100 via-white to-orange-50 text-amber-900",
+      iconShell: "bg-amber-500 text-white shadow-amber-200",
+    },
+    {
+      label: "Payments",
+      value: String(payments.length),
+      hint: payments.length > 0 ? "Transactions on file" : "No payment records",
+      icon: BookOpen,
+      shell: "border-emerald-200/80 bg-gradient-to-br from-emerald-100 via-white to-teal-50 text-emerald-900",
+      iconShell: "bg-emerald-600 text-white shadow-emerald-200",
+    },
+    {
+      label: "Khata",
+      value: khataLabel,
+      hint: khataBalance < 0 ? "Pending ledger balance" : khataBalance > 0 ? "Advance available" : "No open balance",
+      icon: MessageSquare,
+      shell: khataBalance < 0
+        ? "border-rose-200/80 bg-gradient-to-br from-rose-100 via-white to-red-50 text-rose-900"
+        : khataBalance > 0
+          ? "border-emerald-200/80 bg-gradient-to-br from-emerald-100 via-white to-lime-50 text-emerald-900"
+          : "border-slate-200/80 bg-gradient-to-br from-slate-100 via-white to-slate-50 text-slate-900",
+      iconShell: khataBalance < 0
+        ? "bg-rose-600 text-white shadow-rose-200"
+        : khataBalance > 0
+          ? "bg-emerald-600 text-white shadow-emerald-200"
+          : "bg-slate-700 text-white shadow-slate-200",
+    },
+  ]
+  const tabItems = [
+    { id: "visits", label: "Visits", count: visits.length },
+    { id: "appointments", label: "Appointments", count: appointments.length },
+    { id: "payments", label: "Payments", count: payments.length },
+    {
+      id: "khata",
+      label: "Khata Ledger",
+      count: visits.filter((visit) => (visit.totalBill || 0) > 0).length + payments.length,
+    },
+  ]
 
   return (
-    <div className="space-y-6 max-w-5xl mx-auto">
+    <div className="relative mx-auto max-w-5xl space-y-6 pb-8">
       <Breadcrumb items={[
         { label: "Dashboard", href: "/" },
         { label: "Patients", href: "/patients" },
@@ -414,52 +483,58 @@ export default function PatientDetailPage() {
       )}
 
       {/* Patient Profile Card */}
-      <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
-        <div className="flex flex-col md:flex-row gap-6 items-start md:items-center justify-between">
-          <div className="flex items-center gap-6">
+      <div className="relative overflow-hidden rounded-[28px] border border-sky-100 bg-gradient-to-br from-sky-50 via-white to-emerald-50 p-6 shadow-[0_24px_80px_-36px_rgba(14,116,144,0.35)] sm:p-8">
+        <div className="absolute inset-x-0 top-0 h-40 bg-[radial-gradient(circle_at_top_right,_rgba(14,165,233,0.2),_transparent_45%),radial-gradient(circle_at_left,_rgba(16,185,129,0.16),_transparent_30%)]" />
+        <div className="relative flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+          <div className="flex items-start gap-5">
             {patient.photo ? (
-              <div className="relative h-16 w-16 overflow-hidden rounded-full border-2 border-slate-200">
-                <Image src={patient.photo} alt={patient.fullName} fill unoptimized sizes="64px" className="object-cover" />
+              <div className="relative h-20 w-20 overflow-hidden rounded-[24px] border-4 border-white shadow-lg shadow-sky-100">
+                <Image src={patient.photo} alt={patient.fullName} fill unoptimized sizes="80px" className="object-cover" />
               </div>
             ) : (
-              <Avatar fallback={patient.fullName?.substring(0, 2).toUpperCase()} size="xl" />
+              <div className="rounded-[24px] bg-white p-1 shadow-lg shadow-sky-100">
+                <Avatar fallback={patient.fullName?.substring(0, 2).toUpperCase()} size="xl" />
+              </div>
             )}
-            <div>
-              <div className="flex items-center gap-3">
-                <h1 className="text-2xl font-bold text-slate-900">{patient.fullName}</h1>
-                <Badge variant="outline" className="text-blue-700 border-blue-200 bg-blue-50">Case: {patient.caseNumber}</Badge>
+            <div className="space-y-3">
+              <div className="flex flex-wrap items-center gap-2">
+                <Badge variant="outline" className="border-sky-200 bg-white/80 text-sky-700">Case: {patient.caseNumber}</Badge>
                 <Badge variant="outline" className={`font-bold ${patientTreatmentType === 'Homeopathic' ? 'border-green-200 text-green-700 bg-green-50' : 'border-blue-200 text-blue-700 bg-blue-50'}`}>
                   {patientTreatmentType}
                 </Badge>
+                <Badge variant="secondary" className="bg-white/80 text-slate-700">{patient.gender}</Badge>
+                <Badge variant="secondary" className="bg-white/80 text-slate-700">{patient.age} yrs</Badge>
+                {patient.bloodGroup && <Badge variant="secondary" className="bg-rose-50 text-rose-700">{patient.bloodGroup}</Badge>}
               </div>
-              <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mt-2 text-sm text-slate-600">
-                <span className="flex items-center gap-1"><Phone className="w-4 h-4" /> {patient.mobileNumber}</span>
-                {patient.alternateMobile && <span className="flex items-center gap-1"><Phone className="w-4 h-4 text-slate-400" /> {patient.alternateMobile}</span>}
-                {patient.email && <span className="flex items-center gap-1"><Mail className="w-4 h-4" /> {patient.email}</span>}
+              <div>
+                <h1 className="text-3xl font-semibold tracking-tight text-slate-950">{patient.fullName}</h1>
+                <p className="mt-1 max-w-2xl text-sm leading-6 text-slate-600">
+                  Patient profile, recent care context, and ledger activity in one place.
+                </p>
               </div>
-              <div className="flex flex-wrap items-center gap-2 mt-3">
-                <Badge variant="secondary">{patient.gender}</Badge>
-                <Badge variant="secondary">{patient.age} yrs</Badge>
-                {patient.bloodGroup && <Badge variant="secondary">{patient.bloodGroup}</Badge>}
-                {patient.maritalStatus && <Badge variant="secondary">{patient.maritalStatus}</Badge>}
-                {patient.occupation && <Badge variant="secondary">{patient.occupation}</Badge>}
-                {patient.lmp && <Badge variant="secondary">LMP: {patient.lmp}</Badge>}
-                {patient.menstrualCycleDays && <Badge variant="secondary">Cycle: {patient.menstrualCycleDays}d</Badge>}
+              <div className="flex flex-wrap gap-3 text-sm text-slate-600">
+                <span className="inline-flex items-center gap-2 rounded-full bg-white/80 px-3 py-1.5 shadow-sm">
+                  <Phone className="h-4 w-4 text-sky-600" /> {patient.mobileNumber}
+                </span>
+                {patient.alternateMobile && <span className="inline-flex items-center gap-2 rounded-full bg-white/80 px-3 py-1.5 shadow-sm"><Phone className="h-4 w-4 text-violet-600" /> {patient.alternateMobile}</span>}
+                {patient.email && <span className="inline-flex items-center gap-2 rounded-full bg-white/80 px-3 py-1.5 shadow-sm"><Mail className="h-4 w-4 text-emerald-600" /> {patient.email}</span>}
               </div>
-              {/* Khata Balance Indicator */}
-              {(patient.khataBalance ?? 0) !== 0 && (
-                <div className={`mt-3 inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-bold ${(patient.khataBalance || 0) < 0 ? 'bg-red-50 text-red-700 border border-red-200' : 'bg-green-50 text-green-700 border border-green-200'}`}>
-                  <BookOpen className="w-4 h-4" />
-                  Khata: {(patient.khataBalance || 0) < 0 ? `Due ${formatCurrency(Math.abs(patient.khataBalance || 0))}` : `Advance ${formatCurrency(patient.khataBalance || 0)}`}
-                </div>
-              )}
+              <div className="flex flex-wrap gap-2">
+                {patient.maritalStatus && <Badge variant="secondary" className="bg-white/80 text-slate-700">{patient.maritalStatus}</Badge>}
+                {patient.occupation && <Badge variant="secondary" className="bg-white/80 text-slate-700">{patient.occupation}</Badge>}
+                {patient.lmp && <Badge variant="secondary" className="bg-pink-50 text-pink-700">LMP: {patient.lmp}</Badge>}
+                {patient.menstrualCycleDays && <Badge variant="secondary" className="bg-pink-50 text-pink-700">Cycle: {patient.menstrualCycleDays}d</Badge>}
+                <Badge variant="secondary" className={khataBalance < 0 ? "bg-rose-50 text-rose-700" : khataBalance > 0 ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-700"}>
+                  Khata: {khataLabel}
+                </Badge>
+              </div>
             </div>
           </div>
-          <div className="flex flex-wrap gap-2 w-full md:w-auto">
-            <Button variant="outline" size="sm" className="flex-1 md:flex-none" onClick={() => { resetEditFormState(); setIsEditModalOpen(true) }}>
-              <Edit className="w-4 h-4 mr-2" /> Edit
+          <div className="flex w-full flex-wrap gap-3 lg:w-auto lg:justify-end">
+            <Button size="sm" className="flex-1 bg-slate-900 text-white shadow-lg shadow-slate-200 hover:bg-slate-800 lg:flex-none" onClick={() => { resetEditFormState(); setIsEditModalOpen(true) }}>
+              <Edit className="w-4 h-4 mr-2" /> Edit Profile
             </Button>
-            <Button variant="outline" size="sm" className="flex-1 md:flex-none text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200" onClick={async () => {
+            <Button variant="outline" size="sm" className="flex-1 border-rose-200 bg-white/80 text-rose-600 hover:bg-rose-50 hover:text-rose-700 lg:flex-none" onClick={async () => {
               const linked = await getPatientLinkedRecordCounts(patient.id!)
               const linkedSummary = [
                 linked.appointments ? `${linked.appointments} appointment${linked.appointments > 1 ? "s" : ""}` : "",
@@ -481,109 +556,131 @@ export default function PatientDetailPage() {
           </div>
         </div>
 
+        <div className="relative mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          {patientStats.map((stat) => (
+            <div key={stat.label} className={cn("rounded-[24px] border p-4 shadow-sm backdrop-blur", stat.shell)}>
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">{stat.label}</p>
+                  <p className="mt-2 text-2xl font-semibold tracking-tight text-slate-950">{stat.value}</p>
+                </div>
+                <div className={cn("rounded-2xl p-3 shadow-lg", stat.iconShell)}>
+                  <stat.icon className="h-5 w-5" />
+                </div>
+              </div>
+              <p className="mt-3 text-sm text-slate-600">{stat.hint}</p>
+            </div>
+          ))}
+        </div>
+
         {/* Extended Details Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6 pt-6 border-t border-slate-100 text-sm">
+        <div className="relative mt-6 grid grid-cols-1 gap-4 border-t border-white/60 pt-6 text-sm md:grid-cols-2 xl:grid-cols-4">
           {patient.address?.line1 && (
-            <div><span className="text-xs font-semibold text-slate-400 uppercase">Address</span><p className="text-slate-700 mt-0.5">{patient.address.line1}{patient.address.city ? `, ${patient.address.city}` : ""}{patient.address.state ? `, ${patient.address.state}` : ""}{patient.address.pincode ? ` - ${patient.address.pincode}` : ""}</p></div>
+            <div className="rounded-[24px] border border-sky-100 bg-white/85 p-4 shadow-sm"><span className="text-xs font-semibold uppercase tracking-[0.24em] text-sky-600">Address</span><p className="mt-2 text-sm leading-6 text-slate-700">{patient.address.line1}{patient.address.city ? `, ${patient.address.city}` : ""}{patient.address.state ? `, ${patient.address.state}` : ""}{patient.address.pincode ? ` - ${patient.address.pincode}` : ""}</p></div>
           )}
           {patient.emergencyContact && (
-            <div><span className="text-xs font-semibold text-slate-400 uppercase">Emergency Contact</span><p className="text-slate-700 mt-0.5">{patient.emergencyContact}</p></div>
+            <div className="rounded-[24px] border border-violet-100 bg-white/85 p-4 shadow-sm"><span className="text-xs font-semibold uppercase tracking-[0.24em] text-violet-600">Emergency Contact</span><p className="mt-2 text-sm font-medium text-slate-800">{patient.emergencyContact}</p></div>
           )}
           {patient.allergies && (
-            <div><span className="text-xs font-semibold text-red-400 uppercase">Allergies</span><p className="text-red-600 font-medium mt-0.5">{patient.allergies}</p></div>
+            <div className="rounded-[24px] border border-rose-100 bg-rose-50/80 p-4 shadow-sm"><span className="text-xs font-semibold uppercase tracking-[0.24em] text-rose-500">Allergies</span><p className="mt-2 text-sm font-medium text-rose-700">{patient.allergies}</p></div>
           )}
           {patient.chronicDiseases && (
-            <div><span className="text-xs font-semibold text-orange-400 uppercase">Chronic Diseases</span><p className="text-orange-700 font-medium mt-0.5">{patient.chronicDiseases}</p></div>
+            <div className="rounded-[24px] border border-amber-100 bg-amber-50/80 p-4 shadow-sm"><span className="text-xs font-semibold uppercase tracking-[0.24em] text-amber-600">Chronic Diseases</span><p className="mt-2 text-sm font-medium text-amber-800">{patient.chronicDiseases}</p></div>
           )}
           {patient.dateOfBirth && (
-            <div><span className="text-xs font-semibold text-slate-400 uppercase">Date of Birth</span><p className="text-slate-700 mt-0.5">{patient.dateOfBirth}</p></div>
+            <div className="rounded-[24px] border border-slate-200 bg-white/85 p-4 shadow-sm"><span className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">Date of Birth</span><p className="mt-2 text-sm font-medium text-slate-800">{patient.dateOfBirth}</p></div>
           )}
           {patient.notes && (
-            <div className="col-span-2"><span className="text-xs font-semibold text-slate-400 uppercase">Notes</span><p className="text-slate-700 mt-0.5">{patient.notes}</p></div>
+            <div className="rounded-[24px] border border-emerald-100 bg-white/85 p-4 shadow-sm md:col-span-2 xl:col-span-2"><span className="text-xs font-semibold uppercase tracking-[0.24em] text-emerald-600">Notes</span><p className="mt-2 text-sm leading-6 text-slate-700">{patient.notes}</p></div>
           )}
         </div>
 
         {/* Overall Medicines Section — always visible */}
         {hasPatientCareSummary && (
-          <div className="mt-6 pt-6 border-t border-slate-100">
-            <div className="flex items-center justify-between gap-3 mb-4">
+          <div className="mt-6 rounded-[28px] border border-slate-200/80 bg-white/80 p-5 shadow-inner shadow-slate-100 backdrop-blur">
+            <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <h3 className="text-sm font-semibold text-slate-700 uppercase tracking-wider flex items-center gap-2">
-                  <Activity className="w-4 h-4 text-blue-600" /> Patient Care Summary
+                <h3 className="flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.24em] text-slate-700">
+                  <Activity className="h-4 w-4 text-sky-600" /> Patient Care Summary
                 </h3>
                 <p className="mt-1 text-sm text-slate-500">
                   Saved clinical details and current medicines are grouped together here for quick review.
                 </p>
               </div>
-              <span className="text-xs text-slate-500">Auto-refreshed after save</span>
+              <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">Auto-refreshed after save</span>
             </div>
 
-            <div className="space-y-6 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+            <div className="space-y-6">
               {hasClinicalDetails && (
                 <div>
-                  <h4 className="text-sm font-semibold text-slate-700 uppercase tracking-wider mb-3 flex items-center gap-2">
-                    <Activity className="w-4 h-4 text-blue-600" /> Clinical Details
+                  <h4 className="mb-3 flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.24em] text-slate-700">
+                    <Activity className="h-4 w-4 text-sky-600" /> Clinical Details
                   </h4>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                  <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
                     {clinicalSummaryItems.map((item) => (
-                      <div key={item.label} className="rounded-xl border border-slate-200 bg-white px-4 py-3">
-                        <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">{item.label}</p>
+                      <div key={item.label} className="rounded-2xl border border-sky-100 bg-gradient-to-br from-white to-sky-50 px-4 py-3 shadow-sm">
+                        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">{item.label}</p>
                         <p className="mt-1 text-sm font-medium text-slate-900">{item.value}</p>
                       </div>
                     ))}
                   </div>
-                  <div className="mt-4 rounded-xl border border-slate-200 bg-white px-4 py-3">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Present Complaints</p>
+                  <div className="mt-4 rounded-2xl border border-violet-100 bg-gradient-to-br from-violet-50 to-white px-4 py-3 shadow-sm">
+                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-violet-600">Present Complaints</p>
                     <p className="mt-1 text-sm text-slate-900">{patient.presentComplaints || "-"}</p>
                   </div>
-                  <div className="mt-4 rounded-xl border border-slate-200 bg-white px-4 py-3">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Previous Complaint</p>
+                  <div className="mt-4 rounded-2xl border border-violet-100 bg-gradient-to-br from-violet-50 to-white px-4 py-3 shadow-sm">
+                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-violet-600">Previous Complaint</p>
                     <p className="mt-1 text-sm text-slate-900">{previousComplaint || "-"}</p>
                   </div>
                 </div>
               )}
 
               {hasSavedMedicines && (
-                <div className={hasClinicalDetails ? "border-t border-slate-200 pt-6" : ""}>
-                  <h4 className="text-sm font-semibold text-slate-700 uppercase tracking-wider mb-3 flex items-center gap-2">
-                    <Pill className="w-4 h-4 text-blue-600" /> Current Medicines
+                <div className={cn(hasClinicalDetails && "border-t border-slate-200 pt-6")}>
+                  <h4 className="mb-3 flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.24em] text-slate-700">
+                    <Pill className="h-4 w-4 text-emerald-600" /> Current Medicines
                   </h4>
-                  <PatientMedicines medicines={normalizedSavedMedicines} readOnly onMedicinesChange={function (medicines: Medicine[]): void {
-                    throw new Error("Function not implemented.")
-                  } } />
+                  <div className="rounded-2xl border border-emerald-100 bg-gradient-to-br from-emerald-50/70 to-white p-4 shadow-sm">
+                    <PatientMedicines medicines={normalizedSavedMedicines} readOnly />
+                  </div>
                 </div>
               )}
             </div>
           </div>
         )}
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-6 pt-6 border-t border-slate-100">
-          <Button variant="outline" className="w-full justify-start text-slate-700" onClick={() => router.push('/appointments')}>
-            <Calendar className="w-4 h-4 mr-2 text-blue-600" /> Book Appt
+        <div className="mt-6 grid grid-cols-1 gap-3 border-t border-white/60 pt-6 sm:grid-cols-3">
+          <Button variant="outline" className="w-full justify-start rounded-2xl border-sky-200 bg-white/80 text-slate-700 hover:bg-sky-50" onClick={() => router.push('/appointments')}>
+            <Calendar className="w-4 h-4 mr-2 text-sky-600" /> Book Appointment
           </Button>
-          <Button variant="outline" className="w-full justify-start text-slate-700" onClick={() => router.push('/visits')}>
-            <Pill className="w-4 h-4 mr-2 text-green-600" /> New Visit
+          <Button variant="outline" className="w-full justify-start rounded-2xl border-emerald-200 bg-white/80 text-slate-700 hover:bg-emerald-50" onClick={() => router.push('/visits')}>
+            <Pill className="w-4 h-4 mr-2 text-emerald-600" /> Record Visit
           </Button>
-          <Button variant="outline" className="w-full justify-start text-slate-700" onClick={() => setIsWhatsAppModalOpen(true)}>
-            <MessageSquare className="w-4 h-4 mr-2 text-green-500" /> WhatsApp
+          <Button variant="outline" className="w-full justify-start rounded-2xl border-violet-200 bg-white/80 text-slate-700 hover:bg-violet-50" onClick={() => setIsWhatsAppModalOpen(true)}>
+            <MessageSquare className="w-4 h-4 mr-2 text-violet-600" /> WhatsApp
           </Button>
         </div>
 
-        <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm mt-6">
-          <div className="mb-6">
-            <h2 className="text-lg font-semibold text-slate-900 flex items-center gap-2">
-              <Activity className="w-5 h-5 text-blue-600" /> Update Patient Care
-            </h2>
-            <p className="mt-1 text-sm text-slate-500">
-              Enter clinical details and current medicines together, then save each part when you are ready.
-            </p>
+        <div className="mt-6 rounded-[28px] border border-slate-200 bg-gradient-to-br from-white via-white to-sky-50/70 p-6 shadow-[0_24px_80px_-42px_rgba(15,23,42,0.35)]">
+          <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <h2 className="text-lg font-semibold text-slate-900 flex items-center gap-2">
+                <Activity className="w-5 h-5 text-sky-600" /> Update Patient Care
+              </h2>
+              <p className="mt-1 text-sm text-slate-500">
+                Enter clinical details and current medicines together, then save each part when you are ready.
+              </p>
+            </div>
+            <div className="rounded-full bg-sky-50 px-3 py-1 text-xs font-medium text-sky-700">
+              Quick clinical workspace
+            </div>
           </div>
 
-          <div className="space-y-6">
-            <form onSubmit={handleSaveClinicalDetails} {...FORM_PROPS} className="rounded-2xl border border-slate-200 bg-slate-50 p-4 space-y-4">
+          <div className="grid gap-5 xl:grid-cols-[1.1fr_0.9fr]">
+            <form onSubmit={handleSaveClinicalDetails} {...FORM_PROPS} className="rounded-[24px] border border-sky-100 bg-gradient-to-br from-sky-50 via-white to-cyan-50 p-5 shadow-sm space-y-4">
               <div>
-                <h3 className="text-sm font-semibold text-slate-700 uppercase tracking-wider flex items-center gap-2">
-                  <Activity className="w-4 h-4 text-blue-600" /> Clinical Details
+                <h3 className="text-sm font-semibold text-slate-700 uppercase tracking-[0.24em] flex items-center gap-2">
+                  <Activity className="w-4 h-4 text-sky-600" /> Clinical Details
                 </h3>
                 <p className="mt-1 text-sm text-slate-500">Track complaints, vitals, and repetition in one place.</p>
               </div>
@@ -686,16 +783,16 @@ export default function PatientDetailPage() {
               </div>
 
               <div className="pt-2 flex justify-end">
-                <Button type="submit" disabled={isSavingClinical} className="bg-green-600 hover:bg-green-700">
+                <Button type="submit" disabled={isSavingClinical} className="rounded-2xl bg-sky-600 text-white hover:bg-sky-700">
                   {isSavingClinical ? "Saving..." : "Save Clinical Details"}
                 </Button>
               </div>
             </form>
 
-            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+            <div className="rounded-[24px] border border-emerald-100 bg-gradient-to-br from-emerald-50 via-white to-lime-50 p-5 shadow-sm">
               <div className="mb-4">
-                <h3 className="text-sm font-semibold text-slate-700 uppercase tracking-wider flex items-center gap-2">
-                  <Pill className="w-4 h-4 text-blue-600" /> Current Medicines
+                <h3 className="text-sm font-semibold text-slate-700 uppercase tracking-[0.24em] flex items-center gap-2">
+                  <Pill className="w-4 h-4 text-emerald-600" /> Current Medicines
                 </h3>
                 <p className="mt-1 text-sm text-slate-500">
                   Update medicines here and save once. Typing will not trigger notifications.
@@ -708,6 +805,7 @@ export default function PatientDetailPage() {
                 <Button
                   type="button"
                   variant="outline"
+                  className="rounded-2xl border-slate-200 bg-white/80"
                   disabled={isSavingMedicines || !hasMedicineChanges}
                   onClick={() => setMedicineDraft(buildMedicineDraft())}
                 >
@@ -715,6 +813,7 @@ export default function PatientDetailPage() {
                 </Button>
                 <Button
                   type="button"
+                  className="rounded-2xl bg-emerald-600 text-white hover:bg-emerald-700"
                   disabled={isSavingMedicines || !hasMedicineChanges}
                   onClick={handleSaveMedicines}
                 >
@@ -837,18 +936,28 @@ export default function PatientDetailPage() {
         </div>
       </div>
 
-      <div className="flex border-b border-slate-200 overflow-x-auto">
-        {["visits", "appointments", "payments", "khata"].map(tab => (
-          <button key={tab} onClick={() => setActiveTab(tab)}
-            className={`px-6 py-3 text-sm font-medium border-b-2 transition-colors capitalize whitespace-nowrap ${activeTab === tab ? "border-blue-600 text-blue-600" : "border-transparent text-slate-500 hover:text-slate-700"}`}>
-            {tab === "khata" ? "Khata Ledger" : tab} ({tab === "visits" ? visits.length : tab === "appointments" ? appointments.length : tab === "payments" ? payments.length : (visits.length + payments.length)})
-          </button>
-        ))}
+      <div className="overflow-x-auto rounded-[24px] border border-slate-200 bg-white/90 p-2 shadow-sm backdrop-blur">
+        <div className="flex min-w-max gap-2">
+          {tabItems.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={cn(
+                "rounded-2xl px-5 py-3 text-sm font-medium transition-all whitespace-nowrap",
+                activeTab === tab.id
+                  ? "bg-gradient-to-r from-sky-600 to-cyan-500 text-white shadow-lg shadow-sky-100"
+                  : "bg-transparent text-slate-500 hover:bg-slate-50 hover:text-slate-800"
+              )}
+            >
+              {tab.label} ({tab.count})
+            </button>
+          ))}
+        </div>
       </div>
 
       {activeTab === "visits" && (
         <div className="space-y-4">
-          {visits.length === 0 && <div className="py-12 text-center text-sm text-slate-500 bg-white rounded-xl border border-dashed border-slate-200">No visit records</div>}
+          {visits.length === 0 && <div className="rounded-[24px] border border-dashed border-sky-200 bg-gradient-to-br from-white to-sky-50 py-12 text-center text-sm text-slate-500">No visit records</div>}
           {visits.map(visit => (
             <VisitCard
               key={visit.id}
@@ -864,9 +973,9 @@ export default function PatientDetailPage() {
 
       {activeTab === "appointments" && (
         <div className="space-y-3">
-          {appointments.length === 0 && <div className="py-12 text-center text-sm text-slate-500 bg-white rounded-xl border border-dashed border-slate-200">No appointments</div>}
+          {appointments.length === 0 && <div className="rounded-[24px] border border-dashed border-amber-200 bg-gradient-to-br from-white to-amber-50 py-12 text-center text-sm text-slate-500">No appointments</div>}
           {appointments.map(apt => (
-            <div key={apt.id} className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm flex items-center justify-between">
+            <div key={apt.id} className="flex items-center justify-between rounded-[24px] border border-amber-100 bg-gradient-to-r from-white to-amber-50/60 p-4 shadow-sm">
               <div>
                 <p className="text-sm font-medium text-slate-900">{apt.appointmentDate} at {apt.timeSlot}</p>
                 <p className="text-xs text-slate-500 mt-1">{apt.type}</p>
@@ -879,9 +988,9 @@ export default function PatientDetailPage() {
 
       {activeTab === "payments" && (
         <div className="space-y-3">
-          {payments.length === 0 && <div className="py-12 text-center text-sm text-slate-500 bg-white rounded-xl border border-dashed border-slate-200">No payment records</div>}
+          {payments.length === 0 && <div className="rounded-[24px] border border-dashed border-emerald-200 bg-gradient-to-br from-white to-emerald-50 py-12 text-center text-sm text-slate-500">No payment records</div>}
           {payments.map(pay => (
-            <div key={pay.id} className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm flex items-center justify-between">
+            <div key={pay.id} className="flex items-center justify-between rounded-[24px] border border-emerald-100 bg-gradient-to-r from-white to-emerald-50/60 p-4 shadow-sm">
               <div>
                 <p className="text-sm font-medium text-slate-900">{formatCurrency(pay.amount)}</p>
                 <p className="text-xs text-slate-500 mt-1">{pay.date} • {pay.paymentMethod?.toUpperCase()}{pay.description ? ` - ${pay.description}` : ""}</p>
@@ -894,16 +1003,16 @@ export default function PatientDetailPage() {
 
       {activeTab === "khata" && (
         <div className="space-y-4">
-          <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
+          <div className="rounded-[28px] border border-slate-200 bg-gradient-to-br from-white via-white to-emerald-50/70 p-4 shadow-[0_24px_80px_-42px_rgba(15,23,42,0.35)]">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-                <BookOpen className="w-5 h-5 text-blue-600" /> Khata Ledger (Passbook)
+                <BookOpen className="w-5 h-5 text-sky-600" /> Khata Ledger (Passbook)
               </h3>
-              <div className={`px-3 py-1 rounded-lg text-sm font-bold ${(patient.khataBalance || 0) < 0 ? 'bg-red-50 text-red-700' : (patient.khataBalance || 0) > 0 ? 'bg-green-50 text-green-700' : 'bg-slate-50 text-slate-700'}`}>
+              <div className={`px-3 py-1 rounded-xl text-sm font-bold ${(patient.khataBalance || 0) < 0 ? 'bg-red-50 text-red-700' : (patient.khataBalance || 0) > 0 ? 'bg-green-50 text-green-700' : 'bg-slate-50 text-slate-700'}`}>
                 Balance: {(patient.khataBalance || 0) < 0 ? `Due ${formatCurrency(Math.abs(patient.khataBalance || 0))}` : formatCurrency(patient.khataBalance || 0)}
               </div>
             </div>
-            <div className="border border-slate-200 rounded-lg overflow-hidden">
+            <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white/90">
               <table className="w-full text-left text-sm">
                 <thead className="bg-slate-50 border-b border-slate-200 text-xs font-semibold text-slate-500 uppercase">
                   <tr>
@@ -919,10 +1028,10 @@ export default function PatientDetailPage() {
                     const entries: { date: string; sortKey: number; desc: string; debit: number; credit: number }[] = []
                     visits.forEach(v => {
                       if (v.totalBill && v.totalBill > 0) {
-                        const visitDate = v.createdAt?.toDate?.() || new Date();
+                        const visitDate = v.createdAt?.toDate?.()
                         entries.push({
-                          date: visitDate.toLocaleDateString() || "-",
-                          sortKey: visitDate.getTime() || 0,
+                          date: visitDate?.toLocaleDateString() || "-",
+                          sortKey: visitDate?.getTime() || 0,
                           desc: `Visit: ${v.diagnosis || "Consultation"}`,
                           debit: v.totalBill,
                           credit: 0,
@@ -930,10 +1039,10 @@ export default function PatientDetailPage() {
                       }
                     })
                     payments.forEach(p => {
-                      const paymentDate = p.date ? new Date(`${p.date}T00:00:00`) : (p.createdAt?.toDate?.() || new Date());
+                      const paymentDate = p.date ? new Date(`${p.date}T00:00:00`) : p.createdAt?.toDate?.()
                       entries.push({
-                        date: p.date || paymentDate.toLocaleDateString() || "-",
-                        sortKey: paymentDate.getTime() || 0,
+                        date: p.date || paymentDate?.toLocaleDateString() || "-",
+                        sortKey: paymentDate?.getTime() || 0,
                         desc: `Payment: ${p.paymentMethod?.toUpperCase() || ""}${p.description ? ` - ${p.description}` : ""}`,
                         debit: 0,
                         credit: p.amount,

@@ -7,8 +7,8 @@ import './globals.css';
 const inter = Inter({ subsets: ['latin'], variable: '--font-sans' });
 
 export const metadata: Metadata = {
-  title: 'OPD Clinic - Smart Clinic Management',
-  description: 'Manage your clinic efficiently with OPD Clinic Management System.',
+  title: 'Suradkar Hospital - Smart Clinic Management',
+  description: 'Manage your clinic efficiently with Suradkar Hospital.',
 };
 
 export default function RootLayout({children}: {children: React.ReactNode}) {

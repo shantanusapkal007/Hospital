@@ -12,7 +12,7 @@ import Image from "next/image"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Modal } from "@/components/ui/modal"
-import { getPatients, addPatient, searchPatients } from "@/services/patient.service"
+import { getPatients, addPatient, searchPatients, getNextPatientCaseNumber } from "@/services/patient.service"
 import { uploadFileToStorage, validateImageFiles } from "@/services/storage.service"
 import { getLatestVisitsForPatients } from "@/services/visit.service"
 import type { Patient, TreatmentType, Visit, Medicine } from "@/lib/types"
@@ -27,6 +27,7 @@ const sectionTitle = "text-xs font-semibold text-slate-400 uppercase tracking-wi
 
 export default function PatientsPage() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
+  const [caseNumberPrefill, setCaseNumberPrefill] = useState("")
   const [isSaving, setIsSaving] = useState(false)
   const [selectedGender, setSelectedGender] = useState("Male")
   const [selectedTreatmentType, setSelectedTreatmentType] = useState<TreatmentType>("Allopathic")
@@ -66,6 +67,12 @@ export default function PatientsPage() {
   }, [debouncedSearchTerm])
 
   useEffect(() => { fetchPatients() }, [fetchPatients])
+
+  useEffect(() => {
+    if (isAddModalOpen) {
+      getNextPatientCaseNumber().then(num => setCaseNumberPrefill(num))
+    }
+  }, [isAddModalOpen])
 
   useEffect(() => {
     return () => {
@@ -199,7 +206,7 @@ export default function PatientsPage() {
           {/* Basic Info */}
           <h4 className={sectionTitle}>Basic Information</h4>
           <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1"><label className={labelClass}>Case Number *</label><input required name="caseNumber" type="text" className={inputClass} placeholder="CS-1006" {...FORM_FIELD_PROPS} /></div>
+            <div className="space-y-1"><label className={labelClass}>Case Number *</label><input required name="caseNumber" type="text" className={inputClass} placeholder="CS-1006" value={caseNumberPrefill} onChange={(e) => setCaseNumberPrefill(e.target.value)} {...FORM_FIELD_PROPS} /></div>
             <div className="space-y-1"><label className={labelClass}>Mobile Number *</label><input required name="mobile" type="tel" className={inputClass} placeholder="9876543210" {...FORM_FIELD_PROPS} /></div>
           </div>
           <div className="grid grid-cols-2 gap-3">

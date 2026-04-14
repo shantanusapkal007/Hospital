@@ -53,6 +53,26 @@ export function PatientMedicines({ medicines = [], onMedicinesChange, readOnly =
     onMedicinesChange(meds.filter((_, i) => i !== index))
   }
 
+  const handleSaveAndAddAnother = () => {
+    if (!formData || !formData.name.trim() || !formData.dosage.trim() || !formData.frequency.trim()) {
+      showToast("Please fill in all required fields", "warning")
+      return
+    }
+
+    const newMeds = [...meds]
+    if (editingIndex !== null) {
+      if (editingIndex === newMeds.length) {
+        newMeds.push(formData)
+      } else {
+        newMeds[editingIndex] = formData
+      }
+    }
+    
+    onMedicinesChange(newMeds)
+    setEditingIndex(newMeds.length)
+    setFormData({ name: "", dosage: "", frequency: "", days: 0 })
+  }
+
   const handleCancel = () => {
     setEditingIndex(null)
     setFormData(null)
@@ -181,13 +201,20 @@ export function PatientMedicines({ medicines = [], onMedicinesChange, readOnly =
             />
           </div>
 
-          <div className="flex gap-2 pt-2">
+          <div className="flex flex-col sm:flex-row gap-2 pt-2">
+            <button
+              type="button"
+              onClick={handleSaveAndAddAnother}
+              className="flex-1 px-3 py-2 bg-blue-50 text-blue-700 border border-blue-200 rounded-lg hover:bg-blue-100 transition-colors text-sm font-medium whitespace-nowrap"
+            >
+              Save & Add Another
+            </button>
             <button
               type="button"
               onClick={handleSave}
-              className="flex-1 px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+              className="flex-1 px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium whitespace-nowrap"
             >
-              Save Medicine
+              Save & Close
             </button>
             <button
               type="button"

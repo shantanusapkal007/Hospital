@@ -11,7 +11,7 @@ const navItems = [
   { href: "/", label: "Home", icon: Home },
   { href: "/patients", label: "Patients", icon: Users },
   { href: "/appointments", label: "Appts", icon: Calendar },
-  { href: "/visits", label: "Visits", icon: Pill },
+  { href: "/visits", label: "Log", icon: Pill },
   { href: "/payments", label: "Billing", icon: IndianRupee },
 ]
 

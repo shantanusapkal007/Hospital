@@ -77,7 +77,7 @@ function handlePrintVisit(visit: Visit, patient: Patient) {
     </style>
     </head><body>
       <div class="header">
-        <h1>${process.env.NEXT_PUBLIC_APP_NAME || "OPD Clinic"}</h1>
+        <h1>${process.env.NEXT_PUBLIC_APP_NAME || "Suradkar Hospital"}</h1>
         <h3>Consultation Record</h3>
       </div>
       <div class="pat-info">

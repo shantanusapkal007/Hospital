@@ -125,7 +125,7 @@ export default function PaymentsPage() {
 
       phone = phone.slice(-10)
 
-      const message = `*OPD CLINIC*
+      const message = `*SURADKAR HOSPITAL*
 ------------------------
 *Payment Receipt*
 Receipt No: ${pay.id?.substring(0, 6).toUpperCase()}

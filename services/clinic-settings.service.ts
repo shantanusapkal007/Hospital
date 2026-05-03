@@ -15,7 +15,7 @@ export async function getClinicSettings(): Promise<ClinicSettings> {
   if (!snap.exists()) {
     // Return defaults if no settings document exists
     return {
-      clinicName: process.env.NEXT_PUBLIC_APP_NAME || "OPD Clinic",
+      clinicName: process.env.NEXT_PUBLIC_APP_NAME || "Suradkar Hospital",
       doctorName: "",
       specialization: "",
       phone: "",

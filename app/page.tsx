@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Calendar, CheckCircle2, ChevronRight, Clock, Clock3, IndianRupee, Users } from "lucide-react"
+import { Calendar, CheckCircle2, ChevronRight, Clock, Clock3, IndianRupee, Sparkles, Users } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Avatar } from "@/components/ui/avatar"
@@ -69,9 +69,20 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      <div className="space-y-1">
-        <h1 className="text-2xl font-semibold tracking-tight text-slate-950">{greeting}, {user?.displayName || "Doctor"}</h1>
-        <p className="text-sm text-slate-500">A quick view of today&apos;s patients, follow-ups, and collections.</p>
+      <div className="relative overflow-hidden rounded-3xl border border-blue-100 bg-gradient-to-br from-blue-600 via-blue-500 to-cyan-500 p-6 text-white shadow-lg shadow-blue-900/10">
+        <div className="absolute -right-10 -top-10 h-36 w-36 rounded-full bg-white/15 blur-2xl" />
+        <div className="absolute bottom-0 left-8 h-20 w-20 rounded-full bg-cyan-200/20 blur-xl" />
+        <div className="relative flex flex-wrap items-start justify-between gap-4">
+          <div className="space-y-2">
+            <div className="inline-flex items-center gap-2 rounded-full border border-white/30 bg-white/10 px-3 py-1 text-xs font-medium">
+              <Sparkles className="h-3.5 w-3.5" />
+              Intelligent dashboard
+            </div>
+            <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">Suradkar Hospital</h1>
+            <p className="text-sm text-blue-50">{greeting}, {user?.displayName || "Doctor"} - here&apos;s your clinic overview for today.</p>
+          </div>
+          <Badge className="border-white/30 bg-white/15 text-white">Live Operations View</Badge>
+        </div>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -205,7 +216,7 @@ function StatCard({
   }
 
   return (
-    <Card className="transition-transform duration-150 hover:-translate-y-0.5">
+    <Card className="border-slate-200/70 bg-white/90 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
       <CardContent className="flex items-start justify-between gap-4 p-5">
         <div className="space-y-3">
           <div className={`flex h-11 w-11 items-center justify-center rounded-2xl ${tones[tone]}`}>

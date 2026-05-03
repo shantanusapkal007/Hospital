@@ -9,7 +9,7 @@ import { getUpcomingFollowUps } from "@/services/visit.service"
 import { getAppointments } from "@/services/appointment.service"
 import type { Visit, Appointment } from "@/lib/types"
 
-const appName = process.env.NEXT_PUBLIC_APP_NAME || "OPD Clinic";
+const appName = process.env.NEXT_PUBLIC_APP_NAME || "Suradkar Hospital";
 
 export function Header() {
   const pathname = usePathname()

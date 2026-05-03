@@ -1,5 +1,5 @@
 -- ============================================================
--- OPD Clinic Management — Supabase PostgreSQL Schema
+-- Suradkar Hospital Management — Supabase PostgreSQL Schema
 -- ============================================================
 
 -- Users table (extends Supabase auth.users)
@@ -126,7 +126,7 @@ CREATE TABLE IF NOT EXISTS public.clinic_settings (
 
 -- Insert default clinic settings row
 INSERT INTO public.clinic_settings (clinic_name, doctor_name, specialization, phone, email, address)
-VALUES ('OPD Clinic', 'Dr. Consultant', 'General Physician', '', '', '')
+VALUES ('Suradkar Hospital', 'Dr. Consultant', 'General Physician', '', '', '')
 ON CONFLICT DO NOTHING;
 
 -- ============================================================

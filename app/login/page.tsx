@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { Activity, CheckCircle2 } from "lucide-react";
 
-const appName = process.env.NEXT_PUBLIC_APP_NAME || "OPD Clinic";
+const appName = process.env.NEXT_PUBLIC_APP_NAME || "Suradkar Hospital";
 
 const features = [
   "Patient Records Management",

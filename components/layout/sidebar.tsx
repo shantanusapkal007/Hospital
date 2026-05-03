@@ -30,7 +30,7 @@ export function Sidebar() {
         <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-blue-600 text-white font-bold text-lg">
           +
         </div>
-        <span className="text-xl font-bold text-slate-900">{process.env.NEXT_PUBLIC_APP_NAME || "OPD Clinic"}</span>
+        <span className="text-xl font-bold text-slate-900">{process.env.NEXT_PUBLIC_APP_NAME || "Suradkar Hospital"}</span>
       </div>
 
       <div className="flex-1 overflow-y-auto py-6 px-3 flex flex-col gap-1">

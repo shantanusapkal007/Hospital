@@ -1,5 +1,5 @@
 import {
-  collection, doc, getDocs, query, where, Timestamp, runTransaction, increment,
+  collection, doc, getDoc, getDocs, query, where, Timestamp, runTransaction, increment,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { clearPatientCache } from "@/services/patient.service";
@@ -43,6 +43,7 @@ export async function addPayment(data: Omit<Payment, "id" | "createdAt">): Promi
       amount,
       patientName,
       date,
+      appliedToKhata: true,
       createdAt: Timestamp.now(),
     });
 
@@ -70,4 +71,40 @@ export async function getPaymentStats(): Promise<{ total: number; count: number;
   const total = all.filter(p => p.status === "paid").reduce((s, p) => s + p.amount, 0);
   const pending = all.filter(p => p.status === "pending").reduce((s, p) => s + p.amount, 0);
   return { total, count: all.length, pending };
+}
+
+export async function deletePayment(paymentId: string): Promise<void> {
+  if (!paymentId) throw new Error("Payment not found.");
+
+  const paymentRef = doc(db, COL, paymentId);
+  const paymentSnap = await getDoc(paymentRef);
+  if (!paymentSnap.exists()) throw new Error("Payment not found.");
+
+  const payment = paymentSnap.data() as Payment;
+  const patientRef = doc(db, "patients", payment.patientId);
+
+  await runTransaction(db, async (transaction) => {
+    const patientSnap = await transaction.get(patientRef);
+    if (!patientSnap.exists()) throw new Error("Patient not found.");
+
+    const isLegacyVisitAutoPayment =
+      payment.visitId &&
+      payment.description === "Payment for Visit" &&
+      payment.appliedToKhata === undefined;
+    const shouldReverseKhata =
+      payment.status === "paid" &&
+      payment.appliedToKhata !== false &&
+      !isLegacyVisitAutoPayment;
+
+    if (shouldReverseKhata) {
+      transaction.update(patientRef, {
+        khataBalance: increment(-payment.amount),
+        updatedAt: Timestamp.now(),
+      });
+    }
+
+    transaction.delete(paymentRef);
+  });
+
+  clearPatientCache();
 }

@@ -130,6 +130,7 @@ export interface Payment {
   patientId: string;
   patientName: string;
   visitId?: string;
+  appliedToKhata?: boolean;
   amount: number;
   paymentMethod: PaymentMethod;
   status: PaymentStatus;

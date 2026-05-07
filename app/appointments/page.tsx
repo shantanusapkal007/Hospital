@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback, startTransition } from "react"
-import { Plus, ChevronLeft, ChevronRight, CheckCircle2, Clock3, XCircle } from "lucide-react"
+import { Plus, ChevronLeft, ChevronRight, CheckCircle2, Clock3, XCircle, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Avatar } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
@@ -9,7 +9,7 @@ import { Modal } from "@/components/ui/modal"
 import { FORM_FIELD_PROPS, FORM_PROPS } from "@/lib/form-defaults"
 import { useDebouncedValue } from "@/lib/use-debounced-value"
 import { useRouter } from "next/navigation"
-import { getAppointmentsByDate, addAppointment, updateAppointmentStatus } from "@/services/appointment.service"
+import { getAppointmentsByDate, addAppointment, updateAppointmentStatus, deleteAppointment } from "@/services/appointment.service"
 import { searchPatients, addPatient, getNextPatientCaseNumber, getPatient } from "@/services/patient.service"
 import type { Appointment, Patient } from "@/lib/types"
 import { useToast } from "@/components/ui/toast"
@@ -300,6 +300,27 @@ export default function AppointmentsPage() {
                   <option value="cancelled">Cancelled</option>
                   <option value="no-show">No-show</option>
                 </select>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="h-8 w-8 border-red-200 text-red-600 hover:bg-red-50"
+                  disabled={updatingStatusId === apt.id}
+                  onClick={async () => {
+                    if (!window.confirm("Delete this appointment?")) return
+                    try {
+                      setUpdatingStatusId(apt.id!)
+                      await deleteAppointment(apt.id!)
+                      await fetchAppointments()
+                      showToast("Appointment deleted.", "success")
+                    } catch (error: any) {
+                      showToast(error.message || "Failed to delete appointment.", "error")
+                    } finally {
+                      setUpdatingStatusId(null)
+                    }
+                  }}
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                </Button>
               </div>
             </div>
           ))}

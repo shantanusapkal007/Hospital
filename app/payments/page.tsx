@@ -1,14 +1,14 @@
 "use client"
 
 import { useState, useEffect, startTransition } from "react"
-import { MessageSquare, IndianRupee, Plus, Loader2 } from "lucide-react"
+import { MessageSquare, IndianRupee, Plus, Loader2, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Modal } from "@/components/ui/modal"
 import { FORM_FIELD_PROPS, FORM_PROPS } from "@/lib/form-defaults"
 import { useDebouncedValue } from "@/lib/use-debounced-value"
 import { formatCurrency } from "@/lib/utils"
-import { getPayments, addPayment, getPaymentStats } from "@/services/payment.service"
+import { getPayments, addPayment, getPaymentStats, deletePayment } from "@/services/payment.service"
 import { searchPatients, getPatient } from "@/services/patient.service"
 import type { Payment, Patient, PaymentMethod, PaymentStatus } from "@/lib/types"
 import { useToast } from "@/components/ui/toast"
@@ -263,20 +263,40 @@ Thank you for your visit!`
                   <td className="px-6 py-4"><span className="px-2 py-1 bg-blue-50 text-blue-700 rounded-md text-xs font-medium uppercase">{pay.paymentMethod}</span></td>
                   <td className="px-6 py-4 text-slate-500">{pay.date}</td>
                   <td className="px-6 py-4 text-right">
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={() => handleSendWhatsAppBill(pay)}
-                      disabled={isSendingWhatsApp === pay.id}
-                      className="text-green-600 border-green-200 hover:bg-green-50 hover:text-green-700"
-                    >
-                      {isSendingWhatsApp === pay.id ? (
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      ) : (
-                        <MessageSquare className="w-4 h-4 mr-2" />
-                      )}
-                      WhatsApp
-                    </Button>
+                    <div className="flex items-center justify-end gap-2">
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => handleSendWhatsAppBill(pay)}
+                        disabled={isSendingWhatsApp === pay.id}
+                        className="text-green-600 border-green-200 hover:bg-green-50 hover:text-green-700"
+                      >
+                        {isSendingWhatsApp === pay.id ? (
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        ) : (
+                          <MessageSquare className="w-4 h-4 mr-2" />
+                        )}
+                        WhatsApp
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="h-9 w-9 border-red-200 text-red-600 hover:bg-red-50"
+                        onClick={async () => {
+                          if (!window.confirm("Delete this payment?")) return
+                          try {
+                            await deletePayment(pay.id!)
+                            await fetchPayments()
+                            showToast("Payment deleted.", "success")
+                          } catch (error: any) {
+                            showToast(error.message || "Failed to delete payment.", "error")
+                          }
+                        }}
+                        disabled={isSendingWhatsApp === pay.id}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
                   </td>
                 </tr>
               ))}

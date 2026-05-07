@@ -121,6 +121,7 @@ export async function addVisit(data: Omit<Visit, "id" | "createdAt">): Promise<s
           patientId: data.patientId,
           patientName,
           visitId: visitRef.id,
+          appliedToKhata: false,
           amount: totalBill,
           paymentMethod: "cash",
           status: "paid",
